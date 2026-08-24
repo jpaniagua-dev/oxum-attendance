@@ -83,26 +83,27 @@
       <div class="message">{{ t('common.stale') }}</div>
     }
 
-    <!-- Présents first: the tapped name lands here, at the top of the screen. -->
-    @if (present().length) {
+    <!-- Here first: the tapped name lands at the top of the screen. -->
+    @for (section of sections(); track section.key) {
       <section>
         <div class="group-head">
-          <p class="eyebrow">{{ t('roster.present') }}</p>
-          <span class="count">{{ present().length }}</span>
+          <p class="eyebrow">{{ section.label }}</p>
+          <span class="count">{{ section.entries.length }}</span>
         </div>
         <div class="grid">
-          @for (item of present(); track item.key) {
+          @for (entry of section.entries; track entry.key) {
             <div
-              class="name here"
-              [class.just]="highlighted() === item.key"
-              [class.noted]="item.comment"
+              class="name"
+              [class.here]="section.present"
+              [class.just]="highlighted() === entry.key"
+              [class.noted]="entry.noted"
             >
               <button
                 type="button"
                 class="pick"
-                [disabled]="!item.group"
-                (click)="tapPresent(item)"
-                (pointerdown)="onPressStart($event, item.group!, item.student!)"
+                [disabled]="!entry.group || !current.hasSession"
+                (click)="tap(section, entry)"
+                (pointerdown)="onPressStart($event, entry)"
                 (pointermove)="onPressMove($event)"
                 (pointerup)="onPressEnd()"
                 (pointercancel)="onPressEnd()"
@@ -110,45 +111,11 @@
                 (contextmenu)="$event.preventDefault()"
               >
                 <span class="label">
-                  {{ item.name }}
-                  <small>{{ item.detail }}</small>
+                  {{ entry.name }}
+                  @if (entry.trial) {
+                    <small>{{ t('roster.trial') }}</small>
+                  }
                 </span>
-                <span class="box">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                </span>
-              </button>
-            </div>
-          }
-        </div>
-      </section>
-    }
-
-    @for (entry of waiting(); track entry.group.key) {
-      <section>
-        <div class="group-head">
-          <p class="eyebrow">{{ labelOf(entry.group) }}</p>
-          <span class="count">{{ t('roster.expected', { n: entry.students.length }) }}</span>
-        </div>
-        <div class="grid">
-          @for (student of entry.students; track student.row) {
-            <div
-              class="name"
-              [class.just]="highlighted() === entry.group.key + '#' + student.row"
-              [class.noted]="commentOf(entry.group, student)"
-            >
-              <button
-                type="button"
-                class="pick"
-                [disabled]="!current.hasSession"
-                (click)="arrive(entry.group, student)"
-                (pointerdown)="onPressStart($event, entry.group, student)"
-                (pointermove)="onPressMove($event)"
-                (pointerup)="onPressEnd()"
-                (pointercancel)="onPressEnd()"
-                (pointerleave)="onPressEnd()"
-                (contextmenu)="$event.preventDefault()"
-              >
-                <span class="label">{{ student.name }}</span>
                 <span class="box">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 </span>
@@ -165,7 +132,7 @@
       </div>
     }
 
-    @if (!present().length && !waiting().length && !search()) {
+    @if (isEmpty()) {
       <div class="empty">
         <p class="note">{{ t('roster.emptyCourse') }}</p>
       </div>

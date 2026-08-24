@@ -41,7 +41,7 @@ const FR = {
   'roster.searchLabel': 'Chercher un nom',
   'roster.clear': 'Effacer',
   'roster.present': 'Présents',
-  'roster.expected': '{n} attendus',
+  'roster.waiting': 'Attendus',
   'roster.hereOne': 'présent',
   'roster.hereMany': 'présents',
   'roster.noColumn':
@@ -153,12 +153,7 @@ const FR = {
   'remove.body':
     "« {name} » disparaîtra de l'app, sur tous les appareils. Le Google Sheet et son contenu ne sont pas touchés, et tu peux le rajouter avec son lien.",
 
-  'category.active': 'Inscrits',
-  'category.trial': "Cours d'essai",
-  'category.helper': 'Aide',
-  'category.activeOne': 'Inscrit',
-  'category.trialOne': 'Essai',
-  'category.helperOne': 'Aide',
+  'roster.trial': 'Essai',
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',
@@ -204,7 +199,7 @@ const EN: Record<MessageKey, string> = {
   'roster.searchLabel': 'Search for a name',
   'roster.clear': 'Clear',
   'roster.present': 'Here',
-  'roster.expected': '{n} expected',
+  'roster.waiting': 'Expected',
   'roster.hereOne': 'here',
   'roster.hereMany': 'here',
   'roster.noColumn':
@@ -315,12 +310,7 @@ const EN: Record<MessageKey, string> = {
   'remove.body':
     '“{name}” will disappear from the app, on every device. The Google Sheet and its contents are untouched, and you can add it back with its link.',
 
-  'category.active': 'Enrolled',
-  'category.trial': 'Trial class',
-  'category.helper': 'Assisting',
-  'category.activeOne': 'Enrolled',
-  'category.trialOne': 'Trial',
-  'category.helperOne': 'Assisting',
+  'roster.trial': 'Trial',
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',

@@ -282,13 +282,21 @@ main.waiting-screen {
   overflow-wrap: break-word;
 }
 
+/*
+ * The only thing a card says beyond the name. A pill rather than a subtitle,
+ * so it reads as a marker on a few cards instead of a caption under every one.
+ */
 .label small {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  opacity: 0.75;
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
 }
 
 /*

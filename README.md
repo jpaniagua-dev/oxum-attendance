@@ -16,6 +16,10 @@ Three facts about a dance class, and what each one forces:
 - **Students trickle in over the whole hour**, some of them late. So there is no "send at
   the end": a tap is written to the sheet immediately, and anything that cannot be sent
   yet is queued on the device until it can.
+- **Someone hunting for their own name knows which side they dance, not which category
+  the school files them under.** So the roster is four lists — here or expected, leader or
+  follower — and enrolled, trial and assisting students share them. A trial keeps a small
+  badge, which is the only thing a card says beyond the name.
 - **Either teacher may be the one holding the phone**, and sometimes the one who is not
   running late. So the app installs per device and each teacher configures their own,
   while the list of classes is shared server-side.
