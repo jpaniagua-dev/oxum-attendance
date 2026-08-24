@@ -157,8 +157,6 @@ const FR = {
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',
-  'role.leader': 'Leader',
-  'role.follower': 'Follower',
 
   'error.unconfigured': "L'app n'est pas encore configurée.",
   'error.badResponse':
@@ -314,8 +312,6 @@ const EN: Record<MessageKey, string> = {
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',
-  'role.leader': 'Leader',
-  'role.follower': 'Follower',
 
   'error.unconfigured': 'The app is not configured yet.',
   'error.badResponse':
