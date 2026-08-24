@@ -1,0 +1,135 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: calc(1rem + env(safe-area-inset-top)) var(--edge) 1rem;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--ink) 100%);
+}
+
+.masthead h1 {
+  flex: 1;
+  font-size: var(--step-2);
+}
+
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.icon-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 1.25rem var(--edge) calc(2.5rem + env(safe-area-inset-bottom));
+}
+
+main.gate {
+  display: grid;
+  place-items: center;
+  padding: var(--edge);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.pin-field input {
+  letter-spacing: 0.6em;
+  text-align: center;
+  font-size: var(--step-2);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+/* --------------------------------------------------------------------------
+   Rows of workbooks and classes
+   -------------------------------------------------------------------------- */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--ink);
+}
+
+.row.broken {
+  border-color: var(--danger);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.row-main strong {
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.row-main span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: break-word;
+}
+
+.broken-text {
+  color: var(--danger);
+}
+
+.add {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  flex-wrap: wrap;
+}
+
+.add .field {
+  flex: 1;
+  min-width: 220px;
+}

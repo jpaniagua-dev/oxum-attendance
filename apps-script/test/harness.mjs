@@ -29,9 +29,7 @@ export function loadScript(overrides = {}) {
     console,
     Utilities: { formatDate },
     Session: { getScriptTimeZone: () => 'Europe/Zurich' },
-    PropertiesService: {
-      getScriptProperties: () => ({ getProperty: () => 'test-token' })
-    },
+    PropertiesService: makeProperties({ KIOSK_TOKEN: 'test-token' }),
     ContentService: {
       MimeType: { JSON: 'JSON' },
       createTextOutput: (text) => ({ setMimeType: () => ({ text }) })
@@ -41,6 +39,65 @@ export function loadScript(overrides = {}) {
   });
   vm.runInContext(SOURCE, context);
   return context;
+}
+
+/** Script properties backed by a Map, so registry writes are observable. */
+export function makeProperties(initial = {}) {
+  const store = new Map(Object.entries(initial));
+  const api = {
+    getProperty: (key) => (store.has(key) ? store.get(key) : null),
+    setProperty: (key, value) => { store.set(key, String(value)); return api; },
+    deleteProperty: (key) => { store.delete(key); return api; }
+  };
+  return { getScriptProperties: () => api, store };
+}
+
+/**
+ * A sheet stub addressed one cell at a time, the way the writer works.
+ *
+ * It mutates the same grid it reads from, so a test can assert that a write
+ * landed and that a later read sees it — which is how the stale-row checks are
+ * exercised.
+ */
+export function makeSheet(rows, name = 'Feuille 1') {
+  const writes = [];
+  const grid = rows.map((row) => {
+    const copy = row.slice();
+    while (copy.length < WIDTH) copy.push('');
+    return copy;
+  });
+
+  const sheet = {
+    getName: () => name,
+    getDataRange: () => toRange(grid),
+    getRange: (row, column) => ({
+      getValue: () => grid[row - 1][column - 1],
+      getDisplayValue: () => {
+        const value = grid[row - 1][column - 1];
+        if (value === '' || value === null || value === undefined) return '';
+        if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+        return String(value);
+      },
+      setValue: (value) => {
+        writes.push({ row, column, value });
+        grid[row - 1][column - 1] = value;
+      }
+    })
+  };
+
+  return { sheet, writes, grid };
+}
+
+/** A spreadsheet holding one sheet, wired into a loadScript override. */
+export function makeBook(rows, { id = 'book-id', name = 'Feuille 1' } = {}) {
+  const { sheet, writes, grid } = makeSheet(rows, name);
+  const book = {
+    getId: () => id,
+    getName: () => 'Classeur de test',
+    getSheets: () => [sheet],
+    getSheetByName: (wanted) => (wanted === name ? sheet : null)
+  };
+  return { book, sheet, writes, grid };
 }
 
 // ---------------------------------------------------------------------------

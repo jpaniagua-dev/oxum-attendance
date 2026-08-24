@@ -1,0 +1,435 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ---------------------------------------------------------------------------
+   Masthead — sticky, because the search field is the thing students are told
+   to use and it must never scroll away mid-arrival.
+   --------------------------------------------------------------------------- */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: calc(0.9rem + env(safe-area-inset-top)) var(--edge) 0.9rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(14, 13, 12, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.titles h1 {
+  font-size: clamp(1.15rem, 0.95rem + 1vw, 1.5rem);
+  overflow-wrap: break-word;
+}
+
+.date {
+  text-transform: capitalize;
+  font-size: 0.85rem;
+}
+
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.icon-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tally {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--muted);
+}
+
+.tally strong {
+  font-family: var(--display);
+  font-size: var(--step-2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.slash {
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.pill.warn {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Search
+   --------------------------------------------------------------------------- */
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search > svg {
+  position: absolute;
+  left: 0.95rem;
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  padding: 0.9rem 3rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--step-1);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.search input::placeholder {
+  color: var(--faint);
+}
+
+.search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.clear {
+  position: absolute;
+  right: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.clear svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ---------------------------------------------------------------------------
+   Roster
+   --------------------------------------------------------------------------- */
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 1.2rem var(--edge) calc(2.5rem + env(safe-area-inset-bottom));
+}
+
+main.waiting {
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.count {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--gap);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 74px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--step-1);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease,
+    transform 120ms ease;
+}
+
+.name:hover:not(:disabled) {
+  background: var(--surface-hi);
+}
+
+.name:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.name:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* The tick box carries the state; colour alone never does. */
+.box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--line);
+  border-radius: 9px;
+  transition: inherit;
+}
+
+.box svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+
+.name[aria-pressed='true'],
+.name.added {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.name[aria-pressed='true'] .box,
+.name.added .box {
+  border-color: var(--accent-ink);
+}
+
+.name[aria-pressed='true'] .box svg,
+.name.added .box svg {
+  animation: draw 220ms ease forwards;
+}
+
+.name.added {
+  cursor: default;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.empty {
+  padding: 1rem 0;
+}
+
+.walkin-trigger {
+  align-self: flex-start;
+}
+
+/* ---------------------------------------------------------------------------
+   Confirmation — deliberately the loudest thing in the app, because it is read
+   from arm's length by someone already turning away.
+   --------------------------------------------------------------------------- */
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border: 0;
+  background: rgba(14, 13, 12, 0.97);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tick {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.tick svg {
+  width: 48px;
+  height: 48px;
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: draw 320ms ease 60ms forwards;
+}
+
+.confirm strong {
+  font-family: var(--display);
+  font-size: var(--step-3);
+  font-weight: 700;
+}
+
+.who {
+  font-family: var(--display);
+  font-size: var(--step-2);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Walk-in form
+   --------------------------------------------------------------------------- */
+
+.roles {
+  display: flex;
+  gap: var(--gap);
+  margin: 0.4rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.roles legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.role {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.role small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.role.chosen {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.role.chosen small {
+  color: var(--accent-ink);
+  opacity: 0.75;
+}
+
+.field-error {
+  margin-top: 0.5rem;
+  color: var(--danger);
+  font-size: 0.9rem;
+}

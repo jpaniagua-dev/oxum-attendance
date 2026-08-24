@@ -1,0 +1,268 @@
+@if (locked()) {
+  <main class="gate">
+    <div class="stage-inner">
+      <p class="eyebrow">Réglages</p>
+      <h1>Code à quatre chiffres</h1>
+      <p class="note">
+        Les réglages sont protégés parce que l'appareil passe de main en main pendant le
+        cours.
+      </p>
+      <label class="field pin-field">
+        <span>Code</span>
+        <input
+          type="password"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="4"
+          placeholder="••••"
+          [value]="pinEntry()"
+          (input)="onPinEntry($event)"
+        />
+      </label>
+      @if (pinError()) {
+        <p class="field-error">Code incorrect.</p>
+      }
+      <div class="actions">
+        <a class="btn btn-ghost" routerLink="/">Retour</a>
+        <button type="button" class="btn btn-primary" (click)="tryUnlock()">Ouvrir</button>
+      </div>
+    </div>
+  </main>
+} @else {
+  <header class="masthead">
+    <a class="icon-btn" routerLink="/" aria-label="Retour">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+    </a>
+    <h1>Réglages</h1>
+    @if (settings.hasPin()) {
+      <button type="button" class="btn btn-ghost btn-small" (click)="lock()">Verrouiller</button>
+    }
+  </header>
+
+  <main>
+    @if (demo()) {
+      <div class="message">
+        <strong>Mode démonstration.</strong> Les noms sont inventés et rien n'est écrit dans
+        un Google Sheet. Saisis l'URL de déploiement ci-dessous pour passer en réel.
+      </div>
+    }
+
+    <!-- Connection ------------------------------------------------------- -->
+    <section class="card">
+      <h2>Connexion au studio</h2>
+      <p class="note">
+        L'URL du déploiement Apps Script et son jeton. Ces deux valeurs sont propres à cet
+        appareil&nbsp;: Diana les saisit une fois sur le sien.
+      </p>
+
+      <label class="field">
+        <span>URL de déploiement</span>
+        <input
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="https://script.google.com/macros/s/…/exec"
+          [value]="endpoint()"
+          (input)="onEndpoint($event)"
+        />
+      </label>
+
+      <label class="field">
+        <span>Jeton</span>
+        <input
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="KIOSK_TOKEN"
+          [value]="token()"
+          (input)="onToken($event)"
+        />
+      </label>
+
+      <label class="field">
+        <span>Code des réglages</span>
+        <input
+          type="password"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="4"
+          [placeholder]="settings.hasPin() ? 'Inchangé' : '4 chiffres'"
+          [value]="pin()"
+          (input)="onPin($event)"
+        />
+        <small>
+          @if (settings.hasPin()) {
+            Laisse vide pour garder le code actuel.
+          } @else {
+            Sans code, n'importe qui peut ouvrir cette page depuis le cours.
+          }
+        </small>
+      </label>
+
+      @if (probe().kind === 'ok') {
+        <div class="message good">{{ probe().message }}</div>
+      }
+      @if (probe().kind === 'error') {
+        <div class="message error">{{ probe().message }}</div>
+      }
+      @if (savedNote(); as note) {
+        <div class="message good">{{ note }}</div>
+      }
+
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="probe().kind === 'testing' || !endpoint() || !token()"
+          (click)="test()"
+        >
+          {{ probe().kind === 'testing' ? 'Test…' : 'Tester' }}
+        </button>
+        <button type="button" class="btn btn-primary" (click)="save()">Enregistrer</button>
+      </div>
+    </section>
+
+    <!-- Workbooks -------------------------------------------------------- -->
+    <section class="card">
+      <h2>Classeurs Google Sheets</h2>
+      <p class="note">
+        Un classeur par binôme. Ajoute celui d'un nouveau cours en collant son lien&nbsp;; il
+        doit être partagé en édition avec le compte Google qui a déployé le script. La liste
+        est commune à tous les appareils.
+      </p>
+
+      @if (workbookError(); as error) {
+        <div class="message error">{{ error }}</div>
+      }
+
+      @if (workbooksLoading()) {
+        <p class="note">Chargement…</p>
+      }
+
+      <div class="rows">
+        @for (workbook of workbooks(); track workbook.id) {
+          <div class="row" [class.broken]="!workbook.reachable">
+            <div class="row-main">
+              <strong>{{ workbook.title || workbook.label }}</strong>
+              @if (workbook.reachable) {
+                <span>
+                  @if (workbook.courses?.length) {
+                    {{ workbook.courses?.join(' · ') }}
+                  } @else {
+                    Aucun cours reconnu
+                  }
+                </span>
+              } @else {
+                <span class="broken-text">{{ workbook.error }}</span>
+              }
+            </div>
+            <button
+              type="button"
+              class="btn btn-danger btn-small"
+              (click)="askRemove(workbook)"
+            >
+              Retirer
+            </button>
+          </div>
+        }
+      </div>
+
+      <form class="add" (submit)="addWorkbook($event)">
+        <label class="field">
+          <span>Ajouter un classeur</span>
+          <input
+            type="url"
+            inputmode="url"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="https://docs.google.com/spreadsheets/d/…"
+            [value]="newWorkbook()"
+            (input)="onNewWorkbook($event)"
+          />
+        </label>
+        <button type="submit" class="btn btn-primary" [disabled]="adding() || !newWorkbook()">
+          {{ adding() ? 'Vérification…' : 'Ajouter' }}
+        </button>
+      </form>
+    </section>
+
+    <!-- Visibility ------------------------------------------------------- -->
+    <section class="card">
+      <h2>Cours affichés</h2>
+      <p class="note">
+        Un classeur peut contenir des cours donnés par quelqu'un d'autre. Masque ceux qui ne
+        sont pas les tiens&nbsp;: ils restent intacts dans le Sheet.
+      </p>
+
+      <div class="rows">
+        @for (course of courses(); track course.id) {
+          <div class="row">
+            <div class="row-main">
+              <strong>{{ course.title }}</strong>
+              <span>{{ course.workbookLabel }}</span>
+            </div>
+            <button
+              type="button"
+              class="btn btn-small"
+              [class.btn-ghost]="!course.hidden"
+              [class.btn-primary]="course.hidden"
+              (click)="toggleCourse(course)"
+            >
+              {{ course.hidden ? 'Masqué' : 'Affiché' }}
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (!courses().length) {
+        <p class="note">Aucun cours chargé pour l'instant.</p>
+      }
+    </section>
+
+    <section class="card">
+      <h2>Essayer sans classeur</h2>
+      <p class="note">
+        Charge une salle fictive pour regarder l'interface et la faire essayer, sans toucher
+        au moindre Google Sheet.
+      </p>
+      <div class="actions">
+        @if (demo()) {
+          <button type="button" class="btn btn-ghost" (click)="leaveDemo()">
+            Quitter la démonstration
+          </button>
+        } @else {
+          <button type="button" class="btn btn-ghost" (click)="startDemo()">
+            Lancer la démonstration
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Installer sur l'appareil</h2>
+      <p class="note">
+        Depuis le navigateur&nbsp;: menu « Partager » puis « Sur l'écran d'accueil » sur
+        iPhone et iPad, ou « Installer l'application » sur Android. L'app s'ouvre alors en
+        plein écran et garde la liste du cours même sans réseau.
+      </p>
+    </section>
+  </main>
+
+  @if (removing(); as workbook) {
+    <div class="stage" role="alertdialog" aria-labelledby="remove-title">
+      <div class="stage-inner">
+        <h1 id="remove-title">Retirer ce classeur&nbsp;?</h1>
+        <p class="note">
+          « {{ workbook.title || workbook.label }} » disparaîtra de l'app, sur tous les
+          appareils. Le Google Sheet et son contenu ne sont pas touchés, et tu peux le
+          rajouter avec son lien.
+        </p>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="cancelRemove()">Annuler</button>
+          <button type="button" class="btn btn-danger" (click)="confirmRemove()">Retirer</button>
+        </div>
+      </div>
+    </div>
+  }
+}

@@ -1,11 +1,12 @@
 {
-  "name": "presence-cours",
+  "name": "oxum-attendance",
   "version": "0.1.0",
   "private": true,
-  "description": "Attendance kiosk for Julio's dance classes at Bachata Geneva Dance Studio",
+  "description": "Attendance kiosk for dance classes at Bachata Geneva Dance Studio",
   "type": "module",
   "scripts": {
     "test": "node --test 'apps-script/test/*.test.mjs'",
-    "build:preview": "node tools/build-preview.mjs"
+    "build": "npm --prefix app run build",
+    "start": "npm --prefix app start"
   }
 }

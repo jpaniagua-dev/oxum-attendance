@@ -1,0 +1,62 @@
+<header class="masthead">
+  <p class="eyebrow rule">Bachata Geneva Dance Studio</p>
+  <a class="gear" routerLink="/reglages" aria-label="Réglages">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+    </svg>
+  </a>
+</header>
+
+<main>
+  <h1>Quel cours&nbsp;?</h1>
+  <p class="note date">{{ date() }}</p>
+
+  @if (store.loading()) {
+    <p class="note">Chargement…</p>
+  }
+
+  @if (store.loadError(); as error) {
+    <div class="message error">{{ error }}</div>
+    <div class="actions start">
+      <button type="button" class="btn btn-primary" (click)="reload()">Réessayer</button>
+      <a class="btn btn-ghost" routerLink="/reglages">Réglages</a>
+    </div>
+  }
+
+  @if (store.stale()) {
+    <div class="message">
+      Liste chargée depuis cet appareil, pas depuis le studio. Les présences partiront dès
+      le retour du réseau.
+    </div>
+  }
+
+  <div class="list">
+    @for (course of courses(); track course.id) {
+      <a class="course" [routerLink]="['/cours', course.id]">
+        <strong>{{ course.title }}</strong>
+        <span>
+          @if (course.hasSession) {
+            {{ countOf(course) }} élèves · {{ course.workbookLabel }}
+          } @else {
+            Pas de colonne pour cette date
+          }
+        </span>
+      </a>
+    }
+  </div>
+
+  @if (!store.loading() && !courses().length && !store.loadError()) {
+    <div class="message">
+      Aucun cours visible aujourd'hui. Ajoute un classeur ou réaffiche un cours masqué
+      depuis les réglages.
+    </div>
+  }
+
+  @for (course of unreachable(); track course.id) {
+    <div class="message error">
+      Classeur « {{ course.title }} » inaccessible. Vérifie qu'il est toujours partagé avec
+      le compte Google qui a déployé le script.
+    </div>
+  }
+</main>

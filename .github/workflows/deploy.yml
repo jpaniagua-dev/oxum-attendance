@@ -1,0 +1,62 @@
+# Publishes the kiosk to GitHub Pages on every push to main.
+#
+# Pages must be switched to "GitHub Actions" as its source once, in the
+# repository settings — a workflow cannot set that for you.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never interrupt a deployment half-written; queue the next one instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Test the backend parser
+        run: npm test
+
+      - name: Install
+        working-directory: app
+        run: npm ci
+
+      # base-href must match the repository name: Pages serves the site from
+      # /<repo>/, and every asset URL is resolved against it.
+      - name: Build
+        working-directory: app
+        run: npx ng build --base-href /${{ github.event.repository.name }}/
+
+      - name: Keep Pages from running Jekyll over the output
+        run: touch app/dist/attendance/browser/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist/attendance/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

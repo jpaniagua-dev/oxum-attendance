@@ -1,0 +1,275 @@
+/*
+ * Attendance — global tokens and shared controls.
+ *
+ * Committed to a single dark theme on purpose: this runs on a phone or tablet
+ * held up in a dance studio under low light, not in a browser whose owner
+ * picked a preference. Every colour is painted explicitly.
+ *
+ * Palette and both typefaces come from the school's own identity — warm near
+ * black, silver-white type, and the amber of the "DANCE STUDIO" wordmark as the
+ * single accent. Nothing else is allowed to be loud.
+ */
+
+:root {
+  --ink: #0e0d0c;
+  --surface: #191614;
+  --surface-hi: #221e1b;
+  --line: #322c27;
+  --text: #f6f1e9;
+  --muted: #a69c91;
+  --faint: #6d645c;
+  --accent: #fbc11f;
+  --accent-deep: #d9a20d;
+  --accent-ink: #17130a;
+  --danger: #e4695b;
+  --good: #7ec98f;
+
+  --step-0: 1rem;
+  --step-1: 1.125rem;
+  --step-2: 1.375rem;
+  --step-3: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+
+  --gap: 0.75rem;
+  --radius: 14px;
+  --edge: max(1rem, env(safe-area-inset-left));
+
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Outfit', 'Inter', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* Passed from hand to hand: no long-press menus, no accidental selection. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--step-3);
+}
+
+h2 {
+  font-size: var(--step-2);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.note {
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+/* ---------------------------------------------------------------------------
+   Controls
+   --------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.3rem;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.btn-danger {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
+.btn-small {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:where(button, input, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   Fields
+   --------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field > span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--step-1);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.field input::placeholder {
+  color: var(--faint);
+}
+
+.field small {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* ---------------------------------------------------------------------------
+   Cards and messages
+   --------------------------------------------------------------------------- */
+
+.card {
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.message {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: rgba(251, 193, 31, 0.09);
+  font-size: 0.95rem;
+}
+
+.message.error {
+  border-color: var(--danger);
+  background: rgba(228, 105, 91, 0.1);
+}
+
+.message.good {
+  border-color: var(--good);
+  background: rgba(126, 201, 143, 0.1);
+}
+
+/* ---------------------------------------------------------------------------
+   Full-screen stages
+   --------------------------------------------------------------------------- */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: var(--edge);
+  background: rgba(14, 13, 12, 0.95);
+  backdrop-filter: blur(6px);
+}
+
+.stage-inner {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  gap: var(--gap);
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

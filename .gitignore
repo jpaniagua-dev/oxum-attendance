@@ -1,5 +1,5 @@
 node_modules/
 dist/
+.angular/
 
-# Deployment URL and token — see web/config.example.js
-web/config.js
+# Per-device configuration is entered in the app, never committed.

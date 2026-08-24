@@ -1,0 +1,225 @@
+@if (course(); as current) {
+  <header class="masthead">
+    <div class="top">
+      <a class="icon-btn" routerLink="/" aria-label="Changer de cours">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+      </a>
+      <div class="titles">
+        <h1>{{ current.title }}</h1>
+        <p class="note date">{{ date() }}</p>
+      </div>
+      <a class="icon-btn" routerLink="/reglages" aria-label="Réglages">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+        </svg>
+      </a>
+    </div>
+
+    <div class="meta">
+      <span class="tally">
+        <strong>{{ tally().present }}</strong>
+        <span class="slash">/ {{ tally().total }}</span>
+        {{ presentWord(tally().present) }}
+      </span>
+      <button
+        type="button"
+        class="pill"
+        [class.warn]="store.sync() !== 'idle'"
+        (click)="retrySync()"
+      >
+        {{ syncLabel() }}
+      </button>
+    </div>
+
+    <label class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        inputmode="search"
+        enterkeyhint="search"
+        autocomplete="off"
+        placeholder="Cherche ton nom…"
+        aria-label="Chercher un nom"
+        [value]="search()"
+        (input)="onSearch($event)"
+      />
+      @if (search()) {
+        <button type="button" class="clear" (click)="clearSearch()" aria-label="Effacer">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      }
+    </label>
+  </header>
+
+  <main>
+    @if (!current.hasSession) {
+      <div class="message error">
+        Aucune colonne ne correspond à aujourd'hui dans le classeur.
+        @if (current.sessionLabels.length) {
+          Colonnes présentes&nbsp;: {{ current.sessionLabels.join(', ') }}.
+        }
+        Ajoute la date dans le Google Sheet, puis recharge.
+      </div>
+    }
+
+    @if (api.demo()) {
+      <div class="message">
+        <strong>Démonstration.</strong> Noms inventés, rien n'est écrit dans un Google Sheet.
+      </div>
+    }
+
+    @if (store.stale()) {
+      <div class="message">
+        Liste chargée depuis cet appareil. Les présences partiront dès le retour du réseau.
+      </div>
+    }
+
+    @for (entry of groups(); track entry.group.key) {
+      <section>
+        <div class="group-head">
+          <p class="eyebrow">{{ labelOf(entry.group) }}</p>
+          <span class="count">{{ entry.present }} / {{ entry.group.students.length }}</span>
+        </div>
+        <div class="grid">
+          @for (student of entry.students; track student.row) {
+            <button
+              type="button"
+              class="name"
+              [attr.aria-pressed]="isPresent(entry.group, student)"
+              [disabled]="!current.hasSession"
+              (click)="tap(entry.group, student)"
+            >
+              <span class="label">{{ student.name }}</span>
+              <span class="box">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    @if (extras().length) {
+      <section>
+        <div class="group-head">
+          <p class="eyebrow">Ajoutés ce soir</p>
+          <span class="count">{{ extras().length }}</span>
+        </div>
+        <div class="grid">
+          @for (extra of extras(); track extra.uid) {
+            <div class="name added" aria-disabled="true">
+              <span class="label">{{ extra.name }} · {{ roleLabel(extra.role) }}</span>
+              <span class="box">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (nothingFound()) {
+      <div class="empty">
+        <p class="note">Aucun nom ne correspond à « {{ search() }} ».</p>
+      </div>
+    }
+
+    <button
+      type="button"
+      class="btn btn-ghost walkin-trigger"
+      [disabled]="!current.hasSession"
+      (click)="openWalkin()"
+    >
+      Je ne suis pas dans la liste
+    </button>
+  </main>
+
+  <!-- Handed back to the student: their name, confirmed, then gone. -->
+  @if (confirmed(); as name) {
+    <button type="button" class="stage confirm" (click)="dismissConfirmation()">
+      <span class="tick">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+      </span>
+      <strong>C'est noté</strong>
+      <span class="who">{{ name }}</span>
+      <span class="note">Passe l'appareil au suivant</span>
+    </button>
+  }
+
+  @if (untick(); as pending) {
+    <div class="stage" role="alertdialog" aria-labelledby="untick-title">
+      <div class="stage-inner">
+        <h1 id="untick-title">{{ pending.student.name }} est déjà noté présent</h1>
+        <p class="note">Retirer cette présence&nbsp;? Le classeur sera mis à jour tout de suite.</p>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="cancelUntick()">Annuler</button>
+          <button type="button" class="btn btn-danger" (click)="confirmUntick()">Retirer</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (walkinOpen()) {
+    <div class="stage" role="dialog" aria-labelledby="walkin-title">
+      <form class="stage-inner" (submit)="submitWalkin($event)">
+        <h1 id="walkin-title">Cours d'essai</h1>
+        <p class="note">Ton prénom et l'initiale de ton nom suffisent.</p>
+
+        <label class="field">
+          <span>Nom</span>
+          <input
+            type="text"
+            maxlength="40"
+            autocomplete="off"
+            enterkeyhint="done"
+            placeholder="Camille B."
+            [value]="walkinName()"
+            (input)="onWalkinName($event)"
+          />
+        </label>
+
+        <fieldset class="roles">
+          <legend>Je danse en</legend>
+          @for (role of ['leader', 'follower']; track role) {
+            <button
+              type="button"
+              class="role"
+              [class.chosen]="walkinRole() === role"
+              (click)="chooseRole($any(role))"
+            >
+              {{ roleLabel($any(role)) }}
+              <small>{{ store.freeSlotsFor(current, $any(role)) }} places</small>
+            </button>
+          }
+        </fieldset>
+
+        @if (walkinError(); as error) {
+          <p class="field-error">{{ error }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="closeWalkin()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Je suis là</button>
+        </div>
+      </form>
+    </div>
+  }
+} @else {
+  <main class="waiting">
+    @if (store.loading()) {
+      <p class="note">Chargement du cours…</p>
+    } @else if (store.loadError(); as error) {
+      <div class="message error">{{ error }}</div>
+      <a class="btn btn-ghost" routerLink="/">Retour aux cours</a>
+    } @else {
+      <p class="note">Ce cours n'est plus dans la liste.</p>
+      <a class="btn btn-ghost" routerLink="/">Retour aux cours</a>
+    }
+  </main>
+}

@@ -1,0 +1,15 @@
+.conflicts {
+  margin: 0;
+  padding: 0.9rem 1rem 0.9rem 2.2rem;
+  border: 1px solid var(--danger);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: rgba(228, 105, 91, 0.1);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.conflicts li + li {
+  margin-top: 0.35rem;
+}

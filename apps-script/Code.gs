@@ -1,14 +1,19 @@
 /**
- * Attendance kiosk backend — Bachata Geneva Dance Studio.
+ * Attendance backend — Bachata Geneva Dance Studio.
  *
- * Reads the attendance workbooks owned by the school and writes back the
- * presence checkboxes for a single session. Deployed as a web app running as
- * the deploying user (Julio), who already has edit rights on both workbooks —
- * so there is no service account and no OAuth secret anywhere in this repo.
+ * Reads the school's attendance workbooks and writes presence checkboxes.
+ * Deployed as a web app running as the deploying user (Julio), who already has
+ * edit rights on the workbooks — so there is no service account and no OAuth
+ * secret anywhere in this repo.
  *
- * Endpoints
- *   GET  ?token=…&date=YYYY-MM-DD   → the whole grid for that session date
- *   POST {token, courseId, date, marks[], additions[]}  → writes the session
+ * Two things drive the shape of this API:
+ *
+ * - Students arrive one at a time, over the whole hour, and whoever is teaching
+ *   may never press a "send" button. So a tick is written the moment it happens
+ *   (`mark`), not gathered into an end-of-class submission.
+ * - The school opens new classes mid-season. So the workbook list lives in
+ *   script properties and is edited from the app (`addWorkbook`), not in this
+ *   file.
  *
  * The workbook layout this parser expects is documented in README.md. Nothing
  * is read from a fixed address: blocks are located by their titles and every
@@ -19,14 +24,19 @@
 // Configuration
 // ---------------------------------------------------------------------------
 
-/** Workbook ids. Not secrets: they only open for accounts the school shared them with. */
-var WORKBOOK_IDS = [
-  '1gA1lbZNnaxmZ79s5GFTLTZDhuJh9wmCIZmc6akp0EFY', // Julio & Diana - mardi
-  '1E1Zxq-JA3UUVTvA2kqckHmdamZYaUepSZfVyKmChN48'  // Julio & Fiona - débutant 1
+/**
+ * Seeds the registry the first time the script runs. Not secrets: these ids
+ * only open for accounts the school shared them with. After the first read the
+ * registry in script properties is authoritative and this list is ignored.
+ */
+var SEED_WORKBOOKS = [
+  { id: '1gA1lbZNnaxmZ79s5GFTLTZDhuJh9wmCIZmc6akp0EFY', label: 'Julio & Diana - mardi' },
+  { id: '1E1Zxq-JA3UUVTvA2kqckHmdamZYaUepSZfVyKmChN48', label: 'Julio & Fiona - débutant 1' }
 ];
 
-/** Script property holding the shared token the kiosk must present. */
 var TOKEN_PROPERTY = 'KIOSK_TOKEN';
+var WORKBOOKS_PROPERTY = 'WORKBOOKS';
+var HIDDEN_PROPERTY = 'HIDDEN_COURSES';
 
 /** Column header that closes the run of session-date columns in a block. */
 var COMMENTS_HEADER = 'commentaires';
@@ -53,16 +63,21 @@ function doGet(e) {
     var params = (e && e.parameter) || {};
     requireToken(params.token);
 
-    if (params.action === 'ping') {
-      return { pong: true, timeZone: scriptTimeZone() };
+    switch (params.action || 'session') {
+      case 'ping':
+        return { pong: true, timeZone: scriptTimeZone() };
+      case 'workbooks':
+        return { workbooks: describeWorkbooks() };
+      case 'session':
+        var date = parseRequestedDate(params.date);
+        return {
+          date: formatIsoDate(date),
+          dateKey: monthDayKey(date),
+          courses: readAllCourses(date)
+        };
+      default:
+        throw new Error('Unknown action "' + params.action + '".');
     }
-
-    var date = parseRequestedDate(params.date);
-    return {
-      date: formatIsoDate(date),
-      dateKey: monthDayKey(date),
-      courses: readAllCourses(date)
-    };
   });
 }
 
@@ -70,7 +85,23 @@ function doPost(e) {
   return respond(function () {
     var body = parseJsonBody(e);
     requireToken(body.token);
-    return applySession(body, parseRequestedDate(body.date));
+
+    switch (body.action) {
+      case 'mark':
+      case 'trial':
+        // Single-operation convenience: the app taps one name at a time.
+        return { results: runOperations([body]) };
+      case 'batch':
+        return { results: runOperations(body.ops || []) };
+      case 'addWorkbook':
+        return { workbooks: addWorkbook(body.url || body.id) };
+      case 'removeWorkbook':
+        return { workbooks: removeWorkbook(body.id) };
+      case 'setHidden':
+        return { hidden: setCourseHidden(body.courseId, body.hidden === true) };
+      default:
+        throw new Error('Unknown action "' + body.action + '".');
+    }
   });
 }
 
@@ -78,7 +109,7 @@ function doPost(e) {
  * Runs `work`, and turns whatever comes out of it — value or exception — into
  * a JSON response. Every endpoint answers 200 with {ok: …}: Apps Script web
  * apps cannot set a status code, so the flag in the body is the only signal
- * the kiosk can rely on.
+ * the app can rely on.
  */
 function respond(work) {
   var payload;
@@ -116,19 +147,173 @@ function parseJsonBody(e) {
 }
 
 // ---------------------------------------------------------------------------
+// Workbook registry
+// ---------------------------------------------------------------------------
+
+function properties() {
+  return PropertiesService.getScriptProperties();
+}
+
+function readJsonProperty(key, fallback) {
+  var raw = properties().getProperty(key);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function writeJsonProperty(key, value) {
+  properties().setProperty(key, JSON.stringify(value));
+}
+
+/** The registry, seeded on first use so a fresh deployment is not empty. */
+function listWorkbooks() {
+  var stored = readJsonProperty(WORKBOOKS_PROPERTY, null);
+  if (stored && stored.length) return stored;
+  writeJsonProperty(WORKBOOKS_PROPERTY, SEED_WORKBOOKS);
+  return SEED_WORKBOOKS;
+}
+
+/** Registry plus what each workbook actually contains, for the settings page. */
+function describeWorkbooks() {
+  return listWorkbooks().map(function (entry) {
+    var described = { id: entry.id, label: entry.label };
+    try {
+      var book = SpreadsheetApp.openById(entry.id);
+      described.title = book.getName();
+      described.courses = countCoursesIn(book);
+      described.reachable = true;
+    } catch (err) {
+      described.reachable = false;
+      described.error = 'Classeur inaccessible — vérifie le partage.';
+    }
+    return described;
+  });
+}
+
+function countCoursesIn(book) {
+  var titles = [];
+  book.getSheets().forEach(function (sheet) {
+    scanSheet(book.getId(), sheet.getName(), sheet.getDataRange(), new Date())
+      .forEach(function (course) { titles.push(course.title); });
+  });
+  return titles;
+}
+
+/**
+ * Registers a workbook from a pasted Sheets URL or a bare id.
+ *
+ * The workbook is opened before it is stored: a link that the deploying account
+ * cannot reach must fail here, where someone is watching, rather than silently
+ * producing a class list with a hole in it.
+ */
+function addWorkbook(reference) {
+  var id = extractSpreadsheetId(reference);
+  if (!id) throw new Error('Lien Google Sheets non reconnu.');
+
+  var registry = listWorkbooks();
+  var already = registry.some(function (entry) { return entry.id === id; });
+  if (already) throw new Error('Ce classeur est déjà dans la liste.');
+
+  var book;
+  try {
+    book = SpreadsheetApp.openById(id);
+  } catch (err) {
+    throw new Error(
+      'Impossible d’ouvrir ce classeur. Il doit être partagé en édition avec le ' +
+      'compte qui a déployé le script.'
+    );
+  }
+
+  var courses = countCoursesIn(book);
+  if (!courses.length) {
+    throw new Error(
+      'Aucun cours reconnu dans « ' + book.getName() + ' ». La grille doit contenir ' +
+      'des blocs « Leaders actifs » / « Followers actifs ».'
+    );
+  }
+
+  registry = registry.concat([{ id: id, label: book.getName() }]);
+  writeJsonProperty(WORKBOOKS_PROPERTY, registry);
+  return describeWorkbooks();
+}
+
+function removeWorkbook(id) {
+  var registry = listWorkbooks().filter(function (entry) { return entry.id !== id; });
+  writeJsonProperty(WORKBOOKS_PROPERTY, registry);
+  return describeWorkbooks();
+}
+
+/** Accepts a full Sheets URL or the bare id. */
+function extractSpreadsheetId(reference) {
+  var text = cleanText(reference);
+  if (!text) return null;
+  var fromUrl = text.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (fromUrl) return fromUrl[1];
+  return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? text : null;
+}
+
+// ---------------------------------------------------------------------------
+// Course visibility
+// ---------------------------------------------------------------------------
+
+/**
+ * A workbook can hold classes taught by other teachers. Hiding is a per-course
+ * flag rather than a filter on the title, because course names repeat across
+ * the school and only a human knows which ones are theirs.
+ */
+function hiddenCourseIds() {
+  return readJsonProperty(HIDDEN_PROPERTY, []);
+}
+
+function setCourseHidden(courseId, hidden) {
+  if (!courseId) throw new Error('Missing courseId.');
+  var current = hiddenCourseIds().filter(function (id) { return id !== courseId; });
+  if (hidden) current.push(courseId);
+  writeJsonProperty(HIDDEN_PROPERTY, current);
+  return current;
+}
+
+// ---------------------------------------------------------------------------
 // Reading
 // ---------------------------------------------------------------------------
 
-/** Reads every course of every workbook, resolved against one session date. */
+/** Reads every course of every registered workbook against one session date. */
 function readAllCourses(date) {
+  var hidden = hiddenCourseIds();
   var courses = [];
-  WORKBOOK_IDS.forEach(function (id) {
-    var book = SpreadsheetApp.openById(id);
+
+  listWorkbooks().forEach(function (entry) {
+    var book;
+    try {
+      book = SpreadsheetApp.openById(entry.id);
+    } catch (err) {
+      // One unreachable workbook must not take the whole class list down.
+      courses.push({
+        id: entry.id + '::?::0',
+        spreadsheetId: entry.id,
+        title: entry.label || entry.id,
+        unreachable: true,
+        hidden: false,
+        hasSession: false,
+        sessionLabels: [],
+        groups: []
+      });
+      return;
+    }
+
     book.getSheets().forEach(function (sheet) {
       scanSheet(book.getId(), sheet.getName(), sheet.getDataRange(), date)
-        .forEach(function (course) { courses.push(course); });
+        .forEach(function (course) {
+          course.workbookLabel = book.getName();
+          course.hidden = hidden.indexOf(course.id) !== -1;
+          courses.push(course);
+        });
     });
   });
+
   return courses;
 }
 
@@ -354,151 +539,103 @@ function sessionKey(value, label) {
 // ---------------------------------------------------------------------------
 
 /**
- * Applies one session: ticks the roster and appends walk-in trial students.
+ * Applies a list of operations, each verified and reported on its own.
  *
- * Everything is verified against the sheet as it is right now. The kiosk sends
- * the row it read earlier, but rows move whenever the school inserts a line,
- * so a row is only written when the name still sitting there is the one the
- * kiosk thinks it is. Mismatches are reported, never guessed.
+ * The app sends one operation per tap and replays the same shapes from its
+ * offline queue, so a batch is just several taps that happened while the room
+ * had no network. One failing operation never blocks the others: a student who
+ * ticked before the school inserted a row should not stop the next student
+ * being recorded.
  */
-function applySession(body, date) {
-  if (!body.courseId) throw new Error('Missing courseId.');
+function runOperations(ops) {
+  var books = {};
+  var sheets = {};
 
-  var target = findCourse(body.courseId, date);
-  var course = target.course;
-  if (!course.hasSession) {
-    throw new Error('No column for ' + formatIsoDate(date) + ' in "' + course.title +
-      '" (columns present: ' + (course.sessionLabels.join(', ') || 'none') + ').');
-  }
-
-  var groups = {};
-  course.groups.forEach(function (group) { groups[group.key] = group; });
-
-  var cells = [];
-  var rejected = [];
-  var written = 0;
-
-  (body.marks || []).forEach(function (mark) {
-    var group = groups[mark.group];
-    if (!group) {
-      rejected.push({ name: mark.name, reason: 'unknown group "' + mark.group + '"' });
-      return;
-    }
-    if (!group.sessionColumn) {
-      rejected.push({ name: mark.name, reason: 'no ' + formatIsoDate(date) + ' column in ' + group.label });
-      return;
-    }
-    // Leaders and followers share row numbers, so a row is only meaningful
-    // inside its own block — never look one up across the whole course.
-    var student = findStudent(group, mark.row);
-    if (!student) {
-      rejected.push({ row: mark.row, name: mark.name, reason: 'row is no longer a roster row in ' + group.label });
-      return;
-    }
-    if (normalize(student.name) !== normalize(mark.name)) {
-      rejected.push({ row: mark.row, name: mark.name, reason: 'row now holds "' + student.name + '"' });
-      return;
-    }
-    cells.push({ row: mark.row, column: group.sessionColumn, value: mark.present === true });
-    written++;
-  });
-
-  var added = [];
-  (body.additions || []).forEach(function (addition) {
-    var name = cleanText(addition.name);
-    var group = groups[addition.role + ':trial'];
-    if (!name) {
-      rejected.push({ reason: 'a walk-in was sent with no name' });
-      return;
-    }
-    if (!group || !group.sessionColumn) {
-      rejected.push({ name: name, reason: 'no trial block with a ' + formatIsoDate(date) + ' column for ' + addition.role });
-      return;
-    }
-    if (!group.freeSlots.length) {
-      rejected.push({ name: name, reason: 'no free row left in ' + group.label });
-      return;
-    }
-    var slot = group.freeSlots.shift();
-    cells.push({ row: slot.row, column: group.nameColumn, value: name });
-    cells.push({ row: slot.row, column: group.sessionColumn, value: addition.present !== false });
-    added.push({ row: slot.row, name: name, role: addition.role });
-  });
-
-  writeCells(target.sheet, cells);
-  SpreadsheetApp.flush();
-
-  return {
-    courseId: course.id,
-    course: course.title,
-    date: formatIsoDate(date),
-    written: written,
-    added: added,
-    rejected: rejected
+  var openSheet = function (spreadsheetId, sheetName) {
+    var key = spreadsheetId + '::' + sheetName;
+    if (sheets[key]) return sheets[key];
+    if (!books[spreadsheetId]) books[spreadsheetId] = SpreadsheetApp.openById(spreadsheetId);
+    var sheet = books[spreadsheetId].getSheetByName(sheetName);
+    if (!sheet) throw new Error('Onglet « ' + sheetName + ' » introuvable.');
+    sheets[key] = sheet;
+    return sheet;
   };
-}
 
-function findStudent(group, row) {
-  for (var i = 0; i < group.students.length; i++) {
-    if (group.students[i].row === row) return group.students[i];
-  }
-  return null;
-}
+  var results = ops.map(function (op) {
+    try {
+      var sheet = openSheet(op.spreadsheetId, op.sheetName);
+      return op.kind === 'trial' || op.action === 'trial'
+        ? writeTrial(sheet, op)
+        : writeMark(sheet, op);
+    } catch (err) {
+      return { ok: false, reason: String((err && err.message) || err) };
+    }
+  });
 
-/** Re-reads the workbook and returns the course the kiosk is submitting for. */
-function findCourse(courseId, date) {
-  var parts = String(courseId).split('::');
-  if (parts.length !== 3) throw new Error('Malformed courseId.');
-
-  var book = SpreadsheetApp.openById(parts[0]);
-  var sheet = book.getSheetByName(parts[1]);
-  if (!sheet) throw new Error('Sheet "' + parts[1] + '" not found.');
-
-  var courses = scanSheet(book.getId(), sheet.getName(), sheet.getDataRange(), date);
-  for (var i = 0; i < courses.length; i++) {
-    if (courses[i].id === courseId) return { sheet: sheet, course: courses[i] };
-  }
-  throw new Error('Course "' + courseId + '" not found — the sheet layout changed.');
+  SpreadsheetApp.flush();
+  return results;
 }
 
 /**
- * Writes the cells, grouped into contiguous runs so one submission costs a
- * handful of range writes instead of one per student. Only the listed rows are
- * touched, so the totals formulas between the blocks are never in a run.
+ * Ticks one existing student.
+ *
+ * Only two cells are touched: the name is read back to confirm the row still
+ * holds the person the app thinks it does, then the session cell is written.
+ * Re-scanning the whole grid for every tap would make each student wait on a
+ * full sheet read for no extra safety.
  */
-function writeCells(sheet, cells) {
-  var byColumn = {};
-  cells.forEach(function (cell) {
-    var key = String(cell.column);
-    if (!byColumn[key]) byColumn[key] = [];
-    byColumn[key].push(cell);
-  });
+function writeMark(sheet, op) {
+  requireCell(op);
+  if (!op.name) throw new Error('Missing name.');
 
-  Object.keys(byColumn).forEach(function (key) {
-    var column = Number(key);
-    var sorted = byColumn[key].sort(function (a, b) { return a.row - b.row; });
-    var run = [];
-    var runStart = null;
-
-    var flush = function () {
-      if (!run.length) return;
-      sheet.getRange(runStart, column, run.length, 1)
-        .setValues(run.map(function (value) { return [value]; }));
-      run = [];
-      runStart = null;
+  var actual = cleanText(sheet.getRange(op.row, op.nameColumn).getDisplayValue());
+  if (normalize(actual) !== normalize(op.name)) {
+    return {
+      ok: false,
+      stale: true,
+      reason: actual
+        ? 'Cette ligne contient maintenant « ' + actual +' ».'
+        : 'Cette ligne est désormais vide.'
     };
+  }
 
-    sorted.forEach(function (cell) {
-      if (runStart !== null && cell.row === runStart + run.length) {
-        run.push(cell.value);
-      } else {
-        flush();
-        runStart = cell.row;
-        run = [cell.value];
-      }
-    });
-    flush();
+  sheet.getRange(op.row, op.sessionColumn).setValue(op.present === true);
+  return { ok: true, row: op.row, name: op.name, present: op.present === true };
+}
+
+/**
+ * Writes a walk-in trial student into a free row, name and tick together.
+ *
+ * The row must still be empty: two devices in the same room can hand out the
+ * same free slot, and overwriting whoever got there first would erase a real
+ * student's name.
+ */
+function writeTrial(sheet, op) {
+  requireCell(op);
+  var name = cleanText(op.name);
+  if (!name) throw new Error('Missing name.');
+
+  var occupant = cleanText(sheet.getRange(op.row, op.nameColumn).getDisplayValue());
+  if (occupant) {
+    return {
+      ok: false,
+      stale: true,
+      reason: 'La ligne libre a été prise par « ' + occupant + ' ».'
+    };
+  }
+
+  sheet.getRange(op.row, op.nameColumn).setValue(name);
+  sheet.getRange(op.row, op.sessionColumn).setValue(op.present !== false);
+  return { ok: true, row: op.row, name: name, added: true };
+}
+
+function requireCell(op) {
+  ['spreadsheetId', 'sheetName', 'row', 'nameColumn', 'sessionColumn'].forEach(function (field) {
+    if (op[field] === undefined || op[field] === null || op[field] === '') {
+      throw new Error('Missing ' + field + '.');
+    }
   });
+  if (typeof op.row !== 'number' || op.row < 1) throw new Error('Invalid row.');
 }
 
 // ---------------------------------------------------------------------------
