@@ -36,6 +36,16 @@
   --good: #2f7d4a;
   --good-soft: rgba(47, 125, 74, 0.1);
 
+  /*
+   * Being present is a state, not an action, so it gets its own green and
+   * leaves the brand amber to the buttons. On a pale ground the fill has to be
+   * solid and dark: a translucent green light enough to look soft would put
+   * white text at roughly 1.2:1, which is no text at all.
+   */
+  --present: #17812f;
+  --present-line: #17812f;
+  --present-ink: #ffffff;
+
   --scrim: rgba(250, 247, 242, 0.94);
   --scrim-strong: rgba(250, 247, 242, 0.96);
   --scrim-solid: rgba(250, 247, 242, 0.98);
@@ -77,6 +87,11 @@
     --good: #7ec98f;
     --good-soft: rgba(126, 201, 143, 0.1);
 
+    /* Translucent over the near-black ground: reads as a deep forest green. */
+    --present: #1ffb4947;
+    --present-line: #1ffb4970;
+    --present-ink: #f6fff8;
+
     --scrim: rgba(14, 13, 12, 0.94);
     --scrim-strong: rgba(14, 13, 12, 0.95);
     --scrim-solid: rgba(14, 13, 12, 0.97);
@@ -105,6 +120,10 @@
   --danger-soft: rgba(228, 105, 91, 0.1);
   --good: #7ec98f;
   --good-soft: rgba(126, 201, 143, 0.1);
+
+  --present: #1ffb4947;
+  --present-line: #1ffb4970;
+  --present-ink: #f6fff8;
 
   --scrim: rgba(14, 13, 12, 0.94);
   --scrim-strong: rgba(14, 13, 12, 0.95);

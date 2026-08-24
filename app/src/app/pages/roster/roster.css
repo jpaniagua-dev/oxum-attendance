@@ -282,15 +282,20 @@ main.waiting {
 
 .name[aria-pressed='true'],
 .name.added {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--present);
+  border-color: var(--present-line);
+  color: var(--present-ink);
   font-weight: 600;
 }
 
 .name[aria-pressed='true'] .box,
 .name.added .box {
-  border-color: var(--accent-ink);
+  border-color: var(--present-ink);
+}
+
+.name[aria-pressed='true'] .box svg,
+.name.added .box svg {
+  stroke: var(--present-ink);
 }
 
 .name[aria-pressed='true'] .box svg,
@@ -342,14 +347,15 @@ main.waiting {
   height: 96px;
   margin-bottom: 0.4rem;
   border-radius: 50%;
-  background: var(--accent);
+  border: 2px solid var(--present-line);
+  background: var(--present);
 }
 
 .tick svg {
   width: 48px;
   height: 48px;
   fill: none;
-  stroke: var(--accent-ink);
+  stroke: var(--present-ink);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -368,7 +374,7 @@ main.waiting {
   font-family: var(--display);
   font-size: var(--step-2);
   font-weight: 600;
-  color: var(--accent-text);
+  color: var(--text);
 }
 
 /* ---------------------------------------------------------------------------
