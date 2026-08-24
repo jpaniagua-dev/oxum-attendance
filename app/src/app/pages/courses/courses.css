@@ -30,6 +30,12 @@
   background: var(--accent);
 }
 
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .gear {
   flex: none;
   display: grid;

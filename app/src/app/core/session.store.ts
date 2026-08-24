@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
+import { I18nService } from './i18n';
 import { Course, Group, Operation, Role, SessionPayload, Student } from './models';
 
 /** A walk-in added on this device but not yet confirmed by the sheet. */
@@ -31,6 +32,7 @@ const RETRY_MS = 15_000;
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
   private readonly api = inject(ApiService);
+  private readonly i18n = inject(I18nService);
 
   readonly date = signal(todayIso());
   readonly courses = signal<Course[]>([]);
@@ -58,6 +60,9 @@ export class SessionStore {
    * falls back to roster order for anyone marked before the app was opened.
    */
   private readonly order = signal<Record<string, number>>({});
+
+  /** Notes edited on this device, ahead of the sheet confirming them. */
+  private readonly notes = signal<Record<string, string>>({});
 
   readonly visibleCourses = computed(() =>
     this.courses().filter((course) => !course.hidden && !course.unreachable),
@@ -116,7 +121,7 @@ export class SessionStore {
         // A class in a basement with no signal still needs its roster.
         this.apply(cached, true);
       } else {
-        this.loadError.set(messageOf(error));
+        this.loadError.set(`${this.i18n.t('error.offline')} (${messageOf(error)})`);
       }
     } finally {
       this.loading.set(false);
@@ -131,6 +136,7 @@ export class SessionStore {
     this.overrides.set(readJson(overridesKey(payload.date), {}));
     this.extras.set(readJson(extrasKey(payload.date), [] as Extra[]));
     this.order.set(readJson(orderKey(payload.date), {}));
+    this.notes.set(readJson(notesKey(payload.date), {}));
 
     const current = this.courseId();
     if (current && !payload.courses.some((course) => course.id === current)) {
@@ -156,6 +162,12 @@ export class SessionStore {
     return this.order()[overrideKey(courseId, groupKey, row)] ?? 0;
   }
 
+  /** The note as it stands here: an unsent edit wins over the loaded value. */
+  commentOf(courseId: string, group: Group, student: Student): string {
+    const pending = this.notes()[overrideKey(courseId, group.key, student.row)];
+    return pending ?? student.comment ?? '';
+  }
+
   extrasFor(courseId: string): Extra[] {
     return this.extras().filter((extra) => extra.courseId === courseId);
   }
@@ -179,6 +191,7 @@ export class SessionStore {
     this.setOverride(course.id, group.key, student.row, present);
     this.recordArrival(course.id, group.key, student.row, present);
     this.enqueue({
+      ...blankOperation(),
       uid: uid(),
       kind: 'mark',
       spreadsheetId: course.spreadsheetId,
@@ -194,6 +207,39 @@ export class SessionStore {
   }
 
   /**
+   * Writes the school's free-text note beside a name.
+   *
+   * The note lives in the same row as the student and is verified against the
+   * same name, so a note about one person can never land beside another. An
+   * empty string is a real value here: it clears the cell.
+   */
+  setComment(course: Course, group: Group, student: Student, text: string): void {
+    if (group.commentColumn === null) return;
+
+    const clean = text.trim().replace(/\s+/g, ' ');
+    this.notes.update((current) => {
+      const next = { ...current, [overrideKey(course.id, group.key, student.row)]: clean };
+      writeJson(notesKey(this.date()), next);
+      return next;
+    });
+
+    this.enqueue({
+      ...blankOperation(),
+      uid: uid(),
+      kind: 'comment',
+      spreadsheetId: course.spreadsheetId,
+      sheetName: course.sheetName,
+      row: student.row,
+      nameColumn: group.nameColumn,
+      commentColumn: group.commentColumn,
+      name: student.name,
+      text: clean,
+      courseId: course.id,
+      groupKey: group.key,
+    });
+  }
+
+  /**
    * Adds a walk-in trial student to the first free row of their half.
    *
    * The row is claimed locally straight away so a second walk-in on the same
@@ -203,13 +249,18 @@ export class SessionStore {
   addTrial(course: Course, role: Role, name: string): { ok: boolean; reason?: string } {
     const group = course.groups.find((candidate) => candidate.key === `${role}:trial`);
     if (!group || group.sessionColumn === null) {
-      return { ok: false, reason: "Ce cours n'a pas de bloc d'essai utilisable aujourd'hui." };
+      return { ok: false, reason: this.i18n.t('walkin.noBlock') };
     }
 
     const claimed = new Set(this.extrasFor(course.id).map((extra) => extra.row));
     const slot = group.freeSlots.find((candidate) => !claimed.has(candidate.row));
     if (!slot) {
-      return { ok: false, reason: `Plus de ligne libre pour les essais ${labelOfRole(role)}.` };
+      return {
+        ok: false,
+        reason: this.i18n.t('walkin.full', {
+          role: this.i18n.t(role === 'leader' ? 'role.leaders' : 'role.followers').toLowerCase(),
+        }),
+      };
     }
 
     const extra: Extra = {
@@ -228,6 +279,7 @@ export class SessionStore {
 
     this.recordArrival(course.id, group.key, slot.row, true);
     this.enqueue({
+      ...blankOperation(),
       uid: extra.uid,
       kind: 'trial',
       spreadsheetId: course.spreadsheetId,
@@ -254,11 +306,12 @@ export class SessionStore {
 
   private enqueue(op: Operation): void {
     this.queue.update((current) => {
-      // A student tapping twice should send one final state, not a pile.
-      const withoutSameCell = current.filter(
-        (existing) => !(existing.kind === 'mark' && sameCell(existing, op)),
-      );
-      const next = op.kind === 'mark' ? [...withoutSameCell, op] : [...current, op];
+      // Tapping twice, or retyping a note, should send one final state. A
+      // walk-in is never superseded: each one is a different person.
+      const next =
+        op.kind === 'trial'
+          ? [...current, op]
+          : [...current.filter((existing) => !sameCell(existing, op)), op];
       writeJson(QUEUE_KEY, next);
       return next;
     });
@@ -305,10 +358,10 @@ export class SessionStore {
         // final state of that cell. Re-queuing the failed older operation would
         // write the stale value last and undo it.
         const superseded = new Set(
-          kept.filter((op) => op.kind === 'mark').map(cellKey),
+          kept.filter((op) => op.kind !== 'trial').map(cellKey),
         );
         const retry = failed.filter(
-          (op) => op.kind !== 'mark' || !superseded.has(cellKey(op)),
+          (op) => op.kind === 'trial' || !superseded.has(cellKey(op)),
         );
         const next = [...kept, ...retry];
         writeJson(QUEUE_KEY, next);
@@ -330,6 +383,16 @@ export class SessionStore {
     if (op.kind === 'mark') {
       this.setOverride(op.courseId, op.groupKey, op.row, !op.present);
       this.recordArrival(op.courseId, op.groupKey, op.row, !op.present);
+      return;
+    }
+    if (op.kind === 'comment') {
+      // Drop the local edit; the reload that follows restores the sheet's text.
+      this.notes.update((current) => {
+        const next = { ...current };
+        delete next[overrideKey(op.courseId, op.groupKey, op.row)];
+        writeJson(notesKey(this.date()), next);
+        return next;
+      });
       return;
     }
     this.extras.update((current) => {
@@ -366,9 +429,32 @@ export class SessionStore {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Identifies the one cell an operation writes to. */
+/**
+ * Identifies the one cell an operation writes to. A tick and a note on the same
+ * row are different cells, so they must never supersede one another.
+ */
 function cellKey(op: Operation): string {
-  return `${op.spreadsheetId}::${op.sheetName}::${op.row}::${op.sessionColumn}`;
+  const column = op.kind === 'comment' ? op.commentColumn : op.sessionColumn;
+  return `${op.spreadsheetId}::${op.sheetName}::${op.row}::${op.kind}::${column}`;
+}
+
+/** Every field an operation carries, so each builder only sets what it means. */
+function blankOperation(): Operation {
+  return {
+    uid: '',
+    kind: 'mark',
+    spreadsheetId: '',
+    sheetName: '',
+    row: 0,
+    nameColumn: 0,
+    sessionColumn: null,
+    commentColumn: null,
+    name: '',
+    present: false,
+    text: '',
+    courseId: '',
+    groupKey: '',
+  };
 }
 
 function sameCell(a: Operation, b: Operation): boolean {
@@ -395,8 +481,8 @@ function orderKey(date: string): string {
   return `attendance.order.${date}`;
 }
 
-function labelOfRole(role: Role): string {
-  return role === 'leader' ? 'leaders' : 'followers';
+function notesKey(date: string): string {
+  return `attendance.notes.${date}`;
 }
 
 function uid(): string {

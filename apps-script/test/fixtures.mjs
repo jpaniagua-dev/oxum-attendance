@@ -33,10 +33,17 @@ export function fionaSheet() {
       'follower:active': [
         { name: 'Amandine R.', present: [true, false, false, false, false, false] },
         { name: 'Bérénice I.', present: [true, false, false, false, false, false] },
-        { name: 'Chloé D. J.', present: [true, false, false, false, false, false] },
+        {
+          name: 'Chloé D. J.',
+          present: [true, false, false, false, false, false],
+          comment: 'pas sûre de continuer'
+        },
         { name: '' }, { name: '' }, { name: '' }, { name: '' }
       ],
-      'leader:trial': roster(['Damien N.', 'Émile R.', 'Farid M.', 'Gaspard S.', 'Hugo C.', 'Ismaël F.', 'Joris']),
+      'leader:trial': [
+        { name: 'Damien N.', comment: 'danse en fait follower' },
+        ...roster(['Émile R.', 'Farid M.', 'Gaspard S.', 'Hugo C.', 'Ismaël F.', 'Joris'], 6)
+      ],
       'follower:trial': roster(
         ['Karine C.', 'Léa D. S.', 'Maud O.', 'Nadia N.', 'Olivia', 'Prune F.', 'Quiterie', 'Roxane L.', 'Sixtine B.'],
         9

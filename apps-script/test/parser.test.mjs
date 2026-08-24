@@ -126,3 +126,29 @@ test('every course carries the address the app needs to write back', () => {
     assert.ok(group.sessionColumn > 0);
   });
 });
+
+test('each block exposes the comments column that closes it', () => {
+  const groups = groupsOf(scan(fionaSheet())[0]);
+
+  for (const key of ['leader:active', 'leader:trial', 'leader:helper']) {
+    assert.equal(groups[key].commentColumn, 10, `${key} should use column J`);
+  }
+  for (const key of ['follower:active', 'follower:trial', 'follower:helper']) {
+    assert.equal(groups[key].commentColumn, 20, `${key} should use column T`);
+  }
+});
+
+test('an existing note is read back with its student', () => {
+  const groups = groupsOf(scan(fionaSheet())[0]);
+
+  assert.equal(groups['leader:trial'].students[0].comment, 'danse en fait follower');
+  assert.equal(groups['leader:trial'].students[1].comment, '');
+  assert.equal(groups['follower:active'].students[2].comment, 'pas sûre de continuer');
+});
+
+test('a block with no notes still reports a comments column', () => {
+  const groups = groupsOf(scan(dianaSheet())[1]);
+
+  assert.equal(groups['leader:active'].commentColumn, 10);
+  groups['leader:active'].students.forEach((student) => assert.equal(student.comment, ''));
+});

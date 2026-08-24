@@ -182,11 +182,13 @@ export function section({ title, dates, blocks }) {
         row[1] = i + 1;
         row[2] = leaders[i].name || '';
         dates.forEach((_, d) => { row[3 + d] = (leaders[i].present || [])[d] ?? false; });
+        row[9] = leaders[i].comment || '';
       }
       if (i < followers.length) {
         row[11] = i + 1;
         row[12] = followers[i].name || '';
         dates.forEach((_, d) => { row[13 + d] = (followers[i].present || [])[d] ?? false; });
+        row[19] = followers[i].comment || '';
       }
       rows.push(row);
     }

@@ -27,6 +27,7 @@ export function demoSession(date: string): SessionPayload {
           'follower:trial': ['Jeanne O.', 'Karen B.', 'Lucie', 'Manon V.', 'Nine G.'],
         },
         alreadyPresent: ['Antoine H.', 'Élodie S.'],
+        notes: { 'Garance P.': 'danse en fait leader' },
       }),
       course({
         id: 'demo-diana::Feuille 1::42',
@@ -81,6 +82,8 @@ interface DemoCourse {
   workbook: string;
   roster: Record<string, string[]>;
   alreadyPresent: string[];
+  /** A couple of notes, so the Commentaires column is visible in the demo. */
+  notes?: Record<string, string>;
 }
 
 function course(spec: DemoCourse): Course {
@@ -98,6 +101,7 @@ function course(spec: DemoCourse): Course {
         number: index + 1,
         name,
         present: spec.alreadyPresent.includes(name),
+        comment: spec.notes?.[name] ?? '',
       }));
       const free = Array.from({ length: Math.max(0, 7 - names.length) }, (_, index) => ({
         row: first + names.length + index,
@@ -111,6 +115,7 @@ function course(spec: DemoCourse): Course {
         category,
         nameColumn: role === 'leader' ? 3 : 13,
         sessionColumn: role === 'leader' ? 4 : 14,
+        commentColumn: role === 'leader' ? 10 : 20,
         sessionColumns: [],
         students,
         freeSlots: free,

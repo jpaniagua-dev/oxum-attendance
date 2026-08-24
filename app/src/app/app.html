@@ -3,11 +3,8 @@
 @if (store.conflicts().length) {
   <div class="stage" role="alertdialog" aria-labelledby="conflict-title">
     <div class="stage-inner">
-      <h1 id="conflict-title">Le classeur a changé</h1>
-      <p class="note">
-        Ces présences n'ont pas pu être écrites, parce que la ligne n'est plus la même dans
-        le Google Sheet. La liste vient d'être rechargée : il faut les recocher.
-      </p>
+      <h1 id="conflict-title">{{ t('conflict.title') }}</h1>
+      <p class="note">{{ t('conflict.body') }}</p>
       <ul class="conflicts">
         @for (conflict of store.conflicts(); track conflict) {
           <li>{{ conflict }}</li>
@@ -15,7 +12,7 @@
       </ul>
       <div class="actions">
         <button type="button" class="btn btn-primary" (click)="store.dismissConflicts()">
-          J'ai compris
+          {{ t('conflict.ok') }}
         </button>
       </div>
     </div>

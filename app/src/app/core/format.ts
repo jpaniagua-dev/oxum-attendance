@@ -1,11 +1,11 @@
 /** Display helpers shared by the screens. */
 
 /** "mardi 25 août" — the studio's own way of naming a session. */
-export function longDate(iso: string): string {
+export function longDate(iso: string, locale: string): string {
   const parts = iso.split('-');
   if (parts.length !== 3) return '';
   const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-  return date.toLocaleDateString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long' });
+  return date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 /**

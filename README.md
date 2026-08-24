@@ -21,6 +21,10 @@ Three facts about a dance class, and what each one forces:
   while the list of classes is shared server-side.
 - **The school opens new classes mid-season**, each with its own workbook. So workbooks
   are added from the settings screen, never from a constant in the source.
+- **The school teaches in French and English**, and a fair share of students are more
+  comfortable in English. So the language switch sits in the class header rather than in
+  the settings: the person who needs it is the one holding the phone, and they do not
+  have the four-digit code.
 
 ## Layout
 
@@ -117,6 +121,9 @@ writing somewhere else.
 ```
 
 `kind: "trial"` writes a walk-in into a free row instead, name and tick together.
+`kind: "comment"` writes free text into the block's `Commentaires` column — `commentColumn`
+and `text` rather than `sessionColumn` and `present`. An empty string clears the cell,
+which is how a note is removed.
 
 Each operation is verified against the sheet as it is right now — the name on that row
 must still be the one the app believed, and a trial row must still be empty — and each is
@@ -125,7 +132,8 @@ stop the next student being recorded. Refused operations come back with `stale: 
 a reason; the app rolls back its optimistic tick and asks a human.
 
 Operations are addressed by cell rather than re-scanned, so a tap costs two small range
-reads instead of a full grid parse.
+reads instead of a full grid parse. A tick and a note on the same row are different cells
+and never supersede one another in the queue.
 
 ### Managing workbooks
 
@@ -185,6 +193,12 @@ for the app, which also clears the deployment URL and token.
 
 The theme follows the device by default — a studio is bright in the afternoon and dim at
 night, and a phone already switches on its own. Settings can force light or dark instead.
+
+The interface language is French or English, switched from the two-letter control in the
+class header. It is deliberately outside the settings screen: students switch it
+themselves. `app/src/app/core/i18n.ts` holds both dictionaries; French is the source of
+truth and the English record is typed against it, so a forgotten key fails the build
+rather than the class.
 
 **Demo mode**: the settings screen can load an invented studio, so the interface can be
 tried and shown around before any Apps Script deployment exists. Nothing is written in

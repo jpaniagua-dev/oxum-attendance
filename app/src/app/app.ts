@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { I18nService } from './core/i18n';
 import { SessionStore } from './core/session.store';
 import { ThemeService } from './core/theme.service';
 
@@ -17,7 +18,10 @@ import { ThemeService } from './core/theme.service';
 })
 export class App {
   protected readonly store = inject(SessionStore);
+  private readonly i18n = inject(I18nService);
 
   /** Injected for its side effect: it stamps the chosen theme on the root. */
   private readonly theme = inject(ThemeService);
+
+  protected readonly t = this.i18n.t.bind(this.i18n);
 }

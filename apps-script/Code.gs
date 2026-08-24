@@ -457,6 +457,7 @@ function readBlock(values, display, block, date) {
   var nameCol = block.col + 1;
 
   var sessionColumns = readSessionColumns(values, display, headerRow, nameCol + 1);
+  var commentIndex = findCommentColumn(display, headerRow, nameCol + 1);
   var wanted = monthDayKey(date);
   var sessionColumn = null;
   var sessionIndex = -1;
@@ -483,7 +484,8 @@ function readBlock(values, display, block, date) {
       row: r + 1,
       number: number,
       name: name,
-      present: sessionIndex === -1 ? null : values[r][sessionIndex] === true
+      present: sessionIndex === -1 ? null : values[r][sessionIndex] === true,
+      comment: commentIndex === -1 ? '' : cleanText(display[r][commentIndex])
     });
   }
 
@@ -493,6 +495,7 @@ function readBlock(values, display, block, date) {
     role: block.role,
     category: block.category,
     nameColumn: nameCol + 1,
+    commentColumn: commentIndex === -1 ? null : commentIndex + 1,
     sessionColumn: sessionColumn,
     sessionColumns: sessionColumns.map(function (column) {
       return { column: column.column, key: column.key, label: column.label };
@@ -517,6 +520,18 @@ function readSessionColumns(values, display, headerRow, startCol) {
     columns.push({ index: c, column: c + 1, key: key, label: label });
   }
   return columns;
+}
+
+/**
+ * The "Commentaires" column that closes a block, scanning rightwards from the
+ * name column so the left half never picks up the right half's one.
+ */
+function findCommentColumn(display, headerRow, startCol) {
+  var header = display[headerRow] || [];
+  for (var c = startCol; c < header.length; c++) {
+    if (normalize(header[c]) === COMMENTS_HEADER) return c;
+  }
+  return -1;
 }
 
 /**
@@ -564,9 +579,10 @@ function runOperations(ops) {
   var results = ops.map(function (op) {
     try {
       var sheet = openSheet(op.spreadsheetId, op.sheetName);
-      return op.kind === 'trial' || op.action === 'trial'
-        ? writeTrial(sheet, op)
-        : writeMark(sheet, op);
+      var kind = op.kind || op.action;
+      if (kind === 'trial') return writeTrial(sheet, op);
+      if (kind === 'comment') return writeComment(sheet, op);
+      return writeMark(sheet, op);
     } catch (err) {
       return { ok: false, reason: String((err && err.message) || err) };
     }
@@ -585,22 +601,45 @@ function runOperations(ops) {
  * full sheet read for no extra safety.
  */
 function writeMark(sheet, op) {
-  requireCell(op);
-  if (!op.name) throw new Error('Missing name.');
-
-  var actual = cleanText(sheet.getRange(op.row, op.nameColumn).getDisplayValue());
-  if (normalize(actual) !== normalize(op.name)) {
-    return {
-      ok: false,
-      stale: true,
-      reason: actual
-        ? 'Cette ligne contient maintenant « ' + actual +' ».'
-        : 'Cette ligne est désormais vide.'
-    };
-  }
+  requireCell(op, 'sessionColumn');
+  var mismatch = nameMismatch(sheet, op);
+  if (mismatch) return mismatch;
 
   sheet.getRange(op.row, op.sessionColumn).setValue(op.present === true);
   return { ok: true, row: op.row, name: op.name, present: op.present === true };
+}
+
+/**
+ * Writes the free-text note the school keeps beside each name.
+ *
+ * The same row check as a tick: the column holds a sentence about a specific
+ * person, so putting it on the wrong row is worse than not writing it at all.
+ * An empty string clears the cell, which is how a note is removed.
+ */
+function writeComment(sheet, op) {
+  requireCell(op, 'commentColumn');
+  var mismatch = nameMismatch(sheet, op);
+  if (mismatch) return mismatch;
+
+  var text = cleanText(op.text);
+  sheet.getRange(op.row, op.commentColumn).setValue(text);
+  return { ok: true, row: op.row, name: op.name, comment: text };
+}
+
+/** Confirms the row still holds the person the app thinks it does. */
+function nameMismatch(sheet, op) {
+  if (!op.name) throw new Error('Missing name.');
+
+  var actual = cleanText(sheet.getRange(op.row, op.nameColumn).getDisplayValue());
+  if (normalize(actual) === normalize(op.name)) return null;
+
+  return {
+    ok: false,
+    stale: true,
+    reason: actual
+      ? 'Cette ligne contient maintenant « ' + actual + ' ».'
+      : 'Cette ligne est désormais vide.'
+  };
 }
 
 /**
@@ -611,7 +650,7 @@ function writeMark(sheet, op) {
  * student's name.
  */
 function writeTrial(sheet, op) {
-  requireCell(op);
+  requireCell(op, 'sessionColumn');
   var name = cleanText(op.name);
   if (!name) throw new Error('Missing name.');
 
@@ -629,8 +668,8 @@ function writeTrial(sheet, op) {
   return { ok: true, row: op.row, name: name, added: true };
 }
 
-function requireCell(op) {
-  ['spreadsheetId', 'sheetName', 'row', 'nameColumn', 'sessionColumn'].forEach(function (field) {
+function requireCell(op, targetColumn) {
+  ['spreadsheetId', 'sheetName', 'row', 'nameColumn', targetColumn].forEach(function (field) {
     if (op[field] === undefined || op[field] === null || op[field] === '') {
       throw new Error('Missing ' + field + '.');
     }

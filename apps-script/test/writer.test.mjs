@@ -217,3 +217,109 @@ test('an unreachable workbook fails only its own operation', () => {
   assert.equal(results[1].ok, true);
   assert.equal(writes.length, 1);
 });
+
+test('a note lands in the comments column of that student’s own half', () => {
+  const { script, writes, course } = withBook(fionaSheet());
+  const group = groupsOf(course())['follower:active'];
+  const student = group.students[0];
+
+  const results = plain(script.runOperations([{
+    kind: 'comment',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: student.row,
+    nameColumn: group.nameColumn,
+    commentColumn: group.commentColumn,
+    name: student.name,
+    text: '  danse   en fait leader  '
+  }]));
+
+  assert.equal(results[0].ok, true);
+  // Whitespace is collapsed, like every other name and label in the sheet.
+  assert.deepEqual(writes, [
+    { row: student.row, column: 20, value: 'danse en fait leader' }
+  ]);
+});
+
+test('an empty note clears the cell rather than being refused', () => {
+  const { script, writes, course } = withBook(fionaSheet());
+  const group = groupsOf(course())['leader:trial'];
+  const student = group.students[0];
+
+  assert.equal(student.comment, 'danse en fait follower', 'fixture should start with a note');
+  const results = plain(script.runOperations([{
+    kind: 'comment',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: student.row,
+    nameColumn: group.nameColumn,
+    commentColumn: group.commentColumn,
+    name: student.name,
+    text: ''
+  }]));
+
+  assert.equal(results[0].ok, true);
+  assert.deepEqual(writes, [{ row: student.row, column: 10, value: '' }]);
+});
+
+test('a note is refused when the row no longer holds that person', () => {
+  const { script, writes, course } = withBook(fionaSheet());
+  const group = groupsOf(course())['follower:active'];
+  const student = group.students[0];
+
+  const results = plain(script.runOperations([{
+    kind: 'comment',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: student.row,
+    nameColumn: group.nameColumn,
+    commentColumn: group.commentColumn,
+    name: 'Quelqu’un d’autre',
+    text: 'note qui ne doit pas passer'
+  }]));
+
+  assert.equal(results[0].ok, false);
+  assert.equal(results[0].stale, true);
+  assert.equal(writes.length, 0);
+});
+
+test('a note without a comments column is refused, not written elsewhere', () => {
+  const { script, writes, course } = withBook(fionaSheet());
+  const group = groupsOf(course())['leader:trial'];
+  const student = group.students[0];
+
+  const results = plain(script.runOperations([{
+    kind: 'comment',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: student.row,
+    nameColumn: group.nameColumn,
+    commentColumn: null,
+    name: student.name,
+    text: 'perdue'
+  }]));
+
+  assert.equal(results[0].ok, false);
+  assert.match(results[0].reason, /Missing commentColumn/);
+  assert.equal(writes.length, 0);
+});
+
+test('a tick and a note on the same row touch two different columns', () => {
+  const { script, writes, course } = withBook(fionaSheet());
+  const group = groupsOf(course())['follower:trial'];
+  const student = group.students[0];
+  const base = {
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: student.row,
+    nameColumn: group.nameColumn,
+    name: student.name
+  };
+
+  script.runOperations([
+    { ...base, kind: 'mark', sessionColumn: group.sessionColumn, present: true },
+    { ...base, kind: 'comment', commentColumn: group.commentColumn, text: 'arrive en retard' }
+  ]);
+
+  assert.deepEqual(writes.map((w) => w.column), [14, 20]);
+});

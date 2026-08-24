@@ -218,42 +218,76 @@ main.waiting-screen {
   gap: var(--gap);
 }
 
+/*
+ * A card is a container, not a button: the main area marks presence and a small
+ * one opens the note. Nesting a button inside a button is invalid HTML, and the
+ * two actions genuinely need separate targets.
+ */
 .name {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  overflow: hidden;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.pick {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-height: 74px;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text);
+  border: 0;
+  background: transparent;
+  color: inherit;
   font: inherit;
   font-size: var(--step-1);
   font-weight: 500;
   text-align: left;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease,
-    transform 120ms ease;
+  transition: background-color 140ms ease, transform 120ms ease;
 }
 
-.name:hover:not(:disabled) {
+.pick:hover:not(:disabled) {
   background: var(--surface-hi);
 }
 
-.name:active:not(:disabled) {
+.pick:active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.name:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.pick:disabled {
+  cursor: default;
 }
 
 .label {
   flex: 1;
   min-width: 0;
   overflow-wrap: break-word;
+}
+
+.label small {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+/* The school's note, shown where it matters: beside the person it is about. */
+.label em {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  font-style: normal;
+  line-height: 1.35;
+  opacity: 0.85;
 }
 
 /* The tick box carries the state; colour alone never does. */
@@ -272,7 +306,7 @@ main.waiting-screen {
   width: 18px;
   height: 18px;
   fill: none;
-  stroke: var(--accent-ink);
+  stroke: var(--present-ink);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -280,16 +314,51 @@ main.waiting-screen {
   stroke-dashoffset: 24;
 }
 
+.note-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.note-btn:hover {
+  color: var(--text);
+  background: var(--surface-hi);
+}
+
+.note-btn.filled {
+  color: var(--accent-text);
+}
+
+.note-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .name.here {
   background: var(--present);
   border-color: var(--present-line);
   color: var(--present-ink);
+}
+
+.name.here .pick {
   font-weight: 600;
 }
 
-.name.here:hover:not(:disabled) {
-  background: var(--present);
-  border-color: var(--present-ink);
+.name.here .pick:hover:not(:disabled),
+.name.here .note-btn:hover {
+  background: var(--press);
 }
 
 .name.here .box {
@@ -297,24 +366,17 @@ main.waiting-screen {
 }
 
 .name.here .box svg {
-  stroke: var(--present-ink);
   animation: draw 220ms ease forwards;
 }
 
-/* A walk-in is already written to the sheet; there is nothing to undo here. */
-.name.here:disabled {
-  opacity: 1;
-  cursor: default;
+.name.here .note-btn {
+  border-left-color: var(--present-ink);
+  color: var(--present-ink);
+  opacity: 0.75;
 }
 
-/* The category, so the teacher can still tell an enrolled student from a trial. */
-.label small {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  opacity: 0.75;
+.name.here .note-btn.filled {
+  opacity: 1;
 }
 
 /*

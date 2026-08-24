@@ -10,26 +10,24 @@ import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../core/api.service';
 import { DEMO_ENDPOINT } from '../../core/demo';
+import { I18nService } from '../../core/i18n';
 import { SessionStore, messageOf } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { ThemeService, ThemeChoice } from '../../core/theme.service';
 import { Course, Workbook } from '../../core/models';
 
-const THEMES: { value: ThemeChoice; label: string }[] = [
-  { value: 'system', label: 'Appareil' },
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
-];
-
 type Probe = { kind: 'idle' | 'testing' | 'ok' | 'error'; message?: string };
+
+const THEMES: ThemeChoice[] = ['system', 'light', 'dark'];
 
 /**
  * Everything that is set once and then left alone.
  *
  * Two kinds of setting live here and they are stored in different places. The
- * deployment URL, the token and the PIN belong to this device — each teacher
- * installs the app on their own phone. The workbook list belongs to the script,
- * so a class added on one device appears on the other.
+ * deployment URL, the token, the code, the theme and the language belong to
+ * this device — each teacher installs the app on their own phone. The workbook
+ * list belongs to the script, so a class added on one device appears on the
+ * other.
  */
 @Component({
   selector: 'app-settings',
@@ -44,7 +42,9 @@ export class Settings {
   protected readonly settings = inject(SettingsService);
   protected readonly store = inject(SessionStore);
   protected readonly theme = inject(ThemeService);
+  protected readonly i18n = inject(I18nService);
 
+  protected readonly t = this.i18n.t.bind(this.i18n);
   protected readonly themes = THEMES;
 
   protected readonly endpoint = signal(this.settings.endpoint());
@@ -75,6 +75,10 @@ export class Settings {
 
     // Leaving the screen locks it again, whichever way you leave.
     this.destroyRef.onDestroy(() => this.settings.lock());
+  }
+
+  protected themeLabel(choice: ThemeChoice): string {
+    return this.t(`theme.${choice}`);
   }
 
   protected chooseTheme(choice: ThemeChoice): void {
@@ -132,7 +136,7 @@ export class Settings {
 
     this.settings.save(patch);
     this.pin.set('');
-    this.savedNote.set('Réglages enregistrés.');
+    this.savedNote.set(this.t('conn.saved'));
     void this.reloadEverything();
   }
 
@@ -141,7 +145,7 @@ export class Settings {
     this.settings.save({ endpoint: this.endpoint(), token: this.token() });
     try {
       const result = await this.api.ping();
-      this.probe.set({ kind: 'ok', message: `Connecté — fuseau ${result.timeZone}.` });
+      this.probe.set({ kind: 'ok', message: this.t('conn.connected', { tz: result.timeZone }) });
     } catch (error) {
       this.probe.set({ kind: 'error', message: messageOf(error) });
     }
@@ -156,7 +160,7 @@ export class Settings {
     this.endpoint.set(DEMO_ENDPOINT);
     this.token.set(DEMO_ENDPOINT);
     this.probe.set({ kind: 'idle' });
-    this.savedNote.set('Mode démonstration activé.');
+    this.savedNote.set(this.t('demo.on'));
     void this.reloadEverything();
   }
 

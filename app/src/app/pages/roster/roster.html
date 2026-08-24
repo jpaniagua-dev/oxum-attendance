@@ -1,14 +1,22 @@
 @if (course(); as current) {
   <header class="masthead">
     <div class="top">
-      <a class="icon-btn" routerLink="/" aria-label="Changer de cours">
+      <a class="icon-btn" routerLink="/" [attr.aria-label]="t('roster.changeCourse')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
       </a>
       <div class="titles">
         <h1>{{ current.title }}</h1>
         <p class="note date">{{ date() }}</p>
       </div>
-      <a class="icon-btn" routerLink="/reglages" aria-label="Réglages">
+      <div class="lang" role="group" [attr.aria-label]="t('lang.title')">
+        <button type="button" [attr.aria-pressed]="i18n.lang() === 'fr'" (click)="i18n.set('fr')">
+          FR
+        </button>
+        <button type="button" [attr.aria-pressed]="i18n.lang() === 'en'" (click)="i18n.set('en')">
+          EN
+        </button>
+      </div>
+      <a class="icon-btn" routerLink="/reglages" [attr.aria-label]="t('common.settings')">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
@@ -42,13 +50,18 @@
         inputmode="search"
         enterkeyhint="search"
         autocomplete="off"
-        placeholder="Cherche ton nom…"
-        aria-label="Chercher un nom"
+        [placeholder]="t('roster.search')"
+        [attr.aria-label]="t('roster.searchLabel')"
         [value]="search()"
         (input)="onSearch($event)"
       />
       @if (search()) {
-        <button type="button" class="clear" (click)="clearSearch()" aria-label="Effacer">
+        <button
+          type="button"
+          class="clear"
+          (click)="clearSearch()"
+          [attr.aria-label]="t('roster.clear')"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -60,50 +73,64 @@
   <main>
     @if (!current.hasSession) {
       <div class="message error">
-        Aucune colonne ne correspond à aujourd'hui dans le classeur.
+        {{ t('roster.noColumn') }}
         @if (current.sessionLabels.length) {
-          Colonnes présentes&nbsp;: {{ current.sessionLabels.join(', ') }}.
+          {{ t('roster.columns', { list: current.sessionLabels.join(', ') }) }}
         }
-        Ajoute la date dans le Google Sheet, puis recharge.
       </div>
     }
 
     @if (api.demo()) {
       <div class="message">
-        <strong>Démonstration.</strong> Noms inventés, rien n'est écrit dans un Google Sheet.
+        <strong>{{ t('roster.demo') }}</strong> {{ t('roster.demoBody') }}
       </div>
     }
 
     @if (store.stale()) {
-      <div class="message">
-        Liste chargée depuis cet appareil. Les présences partiront dès le retour du réseau.
-      </div>
+      <div class="message">{{ t('common.stale') }}</div>
     }
 
     <!-- Présents first: the tapped name lands here, at the top of the screen. -->
     @if (present().length) {
       <section>
         <div class="group-head">
-          <p class="eyebrow">Présents</p>
+          <p class="eyebrow">{{ t('roster.present') }}</p>
           <span class="count">{{ present().length }}</span>
         </div>
         <div class="grid">
           @for (item of present(); track item.key) {
-            <button
-              type="button"
-              class="name here"
-              [class.just]="highlighted() === item.key"
-              [disabled]="!item.group"
-              (click)="tapPresent(item)"
-            >
-              <span class="label">
-                {{ item.name }}
-                <small>{{ item.detail }}</small>
-              </span>
-              <span class="box">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-              </span>
-            </button>
+            <div class="name here" [class.just]="highlighted() === item.key">
+              <button
+                type="button"
+                class="pick"
+                [disabled]="!item.group"
+                (click)="tapPresent(item)"
+              >
+                <span class="label">
+                  {{ item.name }}
+                  <small>{{ item.detail }}</small>
+                  @if (item.comment) {
+                    <em>{{ item.comment }}</em>
+                  }
+                </span>
+                <span class="box">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                </span>
+              </button>
+              @if (item.group && item.student && item.group.commentColumn) {
+                <button
+                  type="button"
+                  class="note-btn"
+                  [class.filled]="item.comment"
+                  [attr.aria-label]="t('note.open')"
+                  (click)="openNote(item.group, item.student)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" />
+                  </svg>
+                </button>
+              }
+            </div>
           }
         </div>
       </section>
@@ -113,22 +140,44 @@
       <section>
         <div class="group-head">
           <p class="eyebrow">{{ labelOf(entry.group) }}</p>
-          <span class="count">{{ entry.students.length }} attendus</span>
+          <span class="count">{{ t('roster.expected', { n: entry.students.length }) }}</span>
         </div>
         <div class="grid">
           @for (student of entry.students; track student.row) {
-            <button
-              type="button"
+            <div
               class="name"
               [class.just]="highlighted() === entry.group.key + '#' + student.row"
-              [disabled]="!current.hasSession"
-              (click)="arrive(entry.group, student)"
             >
-              <span class="label">{{ student.name }}</span>
-              <span class="box">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-              </span>
-            </button>
+              <button
+                type="button"
+                class="pick"
+                [disabled]="!current.hasSession"
+                (click)="arrive(entry.group, student)"
+              >
+                <span class="label">
+                  {{ student.name }}
+                  @if (commentOf(entry.group, student); as note) {
+                    <em>{{ note }}</em>
+                  }
+                </span>
+                <span class="box">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                </span>
+              </button>
+              @if (entry.group.commentColumn) {
+                <button
+                  type="button"
+                  class="note-btn"
+                  [class.filled]="commentOf(entry.group, student)"
+                  [attr.aria-label]="t('note.open')"
+                  (click)="openNote(entry.group, student)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" />
+                  </svg>
+                </button>
+              }
+            </div>
           }
         </div>
       </section>
@@ -136,13 +185,13 @@
 
     @if (nothingFound()) {
       <div class="empty">
-        <p class="note">Aucun nom ne correspond à « {{ search() }} ».</p>
+        <p class="note">{{ t('roster.nothingFound', { q: search() }) }}</p>
       </div>
     }
 
     @if (!present().length && !waiting().length && !search()) {
       <div class="empty">
-        <p class="note">Aucun élève dans ce cours pour l'instant.</p>
+        <p class="note">{{ t('roster.emptyCourse') }}</p>
       </div>
     }
 
@@ -152,44 +201,74 @@
       [disabled]="!current.hasSession"
       (click)="openWalkin()"
     >
-      Je ne suis pas dans la liste
+      {{ t('roster.walkin') }}
     </button>
   </main>
 
   @if (untick(); as pending) {
     <div class="stage" role="alertdialog" aria-labelledby="untick-title">
       <div class="stage-inner">
-        <h1 id="untick-title">{{ pending.student.name }} est noté présent</h1>
-        <p class="note">Retirer cette présence&nbsp;? Le classeur sera mis à jour tout de suite.</p>
+        <h1 id="untick-title">{{ t('untick.title', { name: pending.student.name }) }}</h1>
+        <p class="note">{{ t('untick.body') }}</p>
         <div class="actions">
-          <button type="button" class="btn btn-ghost" (click)="cancelUntick()">Annuler</button>
-          <button type="button" class="btn btn-danger" (click)="confirmUntick()">Retirer</button>
+          <button type="button" class="btn btn-ghost" (click)="cancelUntick()">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmUntick()">
+            {{ t('untick.confirm') }}
+          </button>
         </div>
       </div>
+    </div>
+  }
+
+  @if (noteFor(); as target) {
+    <div class="stage" role="dialog" aria-labelledby="note-title">
+      <form class="stage-inner" (submit)="saveNote($event)">
+        <h1 id="note-title">{{ t('note.title', { name: target.student.name }) }}</h1>
+        <p class="note">{{ t('note.hint') }}</p>
+        <label class="field">
+          <span>{{ t('note.open') }}</span>
+          <textarea
+            rows="3"
+            maxlength="200"
+            autocomplete="off"
+            [placeholder]="t('note.placeholder')"
+            [value]="noteText()"
+            (input)="onNoteText($event)"
+          ></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="closeNote()">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary">{{ t('note.save') }}</button>
+        </div>
+      </form>
     </div>
   }
 
   @if (walkinOpen()) {
     <div class="stage" role="dialog" aria-labelledby="walkin-title">
       <form class="stage-inner" (submit)="submitWalkin($event)">
-        <h1 id="walkin-title">Cours d'essai</h1>
-        <p class="note">Ton prénom et l'initiale de ton nom suffisent.</p>
+        <h1 id="walkin-title">{{ t('walkin.title') }}</h1>
+        <p class="note">{{ t('walkin.hint') }}</p>
 
         <label class="field">
-          <span>Nom</span>
+          <span>{{ t('walkin.name') }}</span>
           <input
             type="text"
             maxlength="40"
             autocomplete="off"
             enterkeyhint="done"
-            placeholder="Camille B."
+            [placeholder]="t('walkin.namePlaceholder')"
             [value]="walkinName()"
             (input)="onWalkinName($event)"
           />
         </label>
 
         <fieldset class="roles">
-          <legend>Je danse en</legend>
+          <legend>{{ t('walkin.roleLegend') }}</legend>
           @for (role of ['leader', 'follower']; track role) {
             <button
               type="button"
@@ -198,7 +277,7 @@
               (click)="chooseRole($any(role))"
             >
               {{ roleLabel($any(role)) }}
-              <small>{{ store.freeSlotsFor(current, $any(role)) }} places</small>
+              <small>{{ t('walkin.places', { n: store.freeSlotsFor(current, $any(role)) }) }}</small>
             </button>
           }
         </fieldset>
@@ -208,8 +287,10 @@
         }
 
         <div class="actions">
-          <button type="button" class="btn btn-ghost" (click)="closeWalkin()">Annuler</button>
-          <button type="submit" class="btn btn-primary">Je suis là</button>
+          <button type="button" class="btn btn-ghost" (click)="closeWalkin()">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary">{{ t('walkin.submit') }}</button>
         </div>
       </form>
     </div>
@@ -217,13 +298,13 @@
 } @else {
   <main class="waiting-screen">
     @if (store.loading()) {
-      <p class="note">Chargement du cours…</p>
+      <p class="note">{{ t('roster.loading') }}</p>
     } @else if (store.loadError(); as error) {
       <div class="message error">{{ error }}</div>
-      <a class="btn btn-ghost" routerLink="/">Retour aux cours</a>
+      <a class="btn btn-ghost" routerLink="/">{{ t('roster.backToCourses') }}</a>
     } @else {
-      <p class="note">Ce cours n'est plus dans la liste.</p>
-      <a class="btn btn-ghost" routerLink="/">Retour aux cours</a>
+      <p class="note">{{ t('roster.gone') }}</p>
+      <a class="btn btn-ghost" routerLink="/">{{ t('roster.backToCourses') }}</a>
     }
   </main>
 }

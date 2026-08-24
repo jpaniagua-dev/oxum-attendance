@@ -42,6 +42,7 @@
    * solid and dark: a translucent green light enough to look soft would put
    * white text at roughly 1.2:1, which is no text at all.
    */
+  --press: rgba(0, 0, 0, 0.08);
   --present: #17812f;
   --present-line: #17812f;
   --present-ink: #ffffff;
@@ -88,7 +89,8 @@
     --good-soft: rgba(126, 201, 143, 0.1);
 
     /* Translucent over the near-black ground: reads as a deep forest green. */
-    --present: #1ffb4947;
+    --press: rgba(255, 255, 255, 0.09);
+  --present: #1ffb4947;
     --present-line: #1ffb4970;
     --present-ink: #f6fff8;
 
@@ -102,6 +104,7 @@
 
 /* The in-app switch, which must win over the device in both directions. */
 :root[data-theme='dark'] {
+  --press: rgba(255, 255, 255, 0.09);
   --ink: #0e0d0c;
   --surface: #191614;
   --surface-hi: #221e1b;
@@ -291,8 +294,51 @@ p {
   user-select: text;
 }
 
-.field input::placeholder {
+.field textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--step-1);
+  line-height: 1.45;
+  resize: vertical;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
   color: var(--faint);
+}
+
+/* Two letters: the smallest control that still reads as a choice. */
+.lang {
+  display: flex;
+  flex: none;
+  padding: 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.lang button {
+  padding: 0.35rem 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.lang button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .field small {

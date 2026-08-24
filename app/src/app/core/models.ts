@@ -10,6 +10,8 @@ export interface Student {
   name: string;
   /** null when the sheet has no column for the requested date. */
   present: boolean | null;
+  /** The school's free-text note beside the name; '' when there is none. */
+  comment: string;
 }
 
 export interface FreeSlot {
@@ -32,6 +34,8 @@ export interface Group {
   nameColumn: number;
   /** null when today has no column in this workbook. */
   sessionColumn: number | null;
+  /** The "Commentaires" column closing this block. */
+  commentColumn: number | null;
   sessionColumns: SessionColumn[];
   students: Student[];
   freeSlots: FreeSlot[];
@@ -72,15 +76,19 @@ export interface Workbook {
 export interface Operation {
   /** Local id, so a result can be matched back to its queue entry. */
   uid: string;
-  kind: 'mark' | 'trial';
+  kind: 'mark' | 'trial' | 'comment';
   spreadsheetId: string;
   sheetName: string;
   row: number;
   nameColumn: number;
-  sessionColumn: number;
+  /** Target for a mark or a walk-in. */
+  sessionColumn: number | null;
+  /** Target for a note. */
+  commentColumn: number | null;
   name: string;
   present: boolean;
-  /** Kept for the UI only; the backend ignores it. */
+  text: string;
+  /** Kept for the UI only; the backend ignores these two. */
   courseId: string;
   groupKey: string;
 }
@@ -93,4 +101,5 @@ export interface OperationResult {
   name?: string;
   added?: boolean;
   present?: boolean;
+  comment?: string;
 }

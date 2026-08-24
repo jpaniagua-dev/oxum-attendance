@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { I18nService } from './i18n';
 import { SettingsService } from './settings.service';
 import { DEMO_ENDPOINT, demoSession, demoWorkbooks } from './demo';
 import { Operation, OperationResult, SessionPayload, Workbook } from './models';
@@ -15,6 +16,7 @@ import { Operation, OperationResult, SessionPayload, Workbook } from './models';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly settings = inject(SettingsService);
+  private readonly i18n = inject(I18nService);
 
   /** Everything runs against invented data while the endpoint is `demo`. */
   readonly demo = () => this.settings.endpoint() === DEMO_ENDPOINT;
@@ -46,19 +48,19 @@ export class ApiService {
   }
 
   async addWorkbook(url: string): Promise<Workbook[]> {
-    if (this.demo()) throw new Error('Impossible d’ajouter un classeur en démonstration.');
+    if (this.demo()) throw new Error(this.i18n.t('demo.banner'));
     const payload = await this.post<{ workbooks: Workbook[] }>({ action: 'addWorkbook', url });
     return payload.workbooks;
   }
 
   async removeWorkbook(id: string): Promise<Workbook[]> {
-    if (this.demo()) throw new Error('Impossible de retirer un classeur en démonstration.');
+    if (this.demo()) throw new Error(this.i18n.t('demo.banner'));
     const payload = await this.post<{ workbooks: Workbook[] }>({ action: 'removeWorkbook', id });
     return payload.workbooks;
   }
 
   async setHidden(courseId: string, hidden: boolean): Promise<void> {
-    if (this.demo()) throw new Error('Impossible de masquer un cours en démonstration.');
+    if (this.demo()) throw new Error(this.i18n.t('demo.banner'));
     await this.post({ action: 'setHidden', courseId, hidden });
   }
 
@@ -91,17 +93,15 @@ export class ApiService {
     try {
       payload = JSON.parse(text);
     } catch {
-      throw new Error(
-        "Réponse inattendue du serveur. Vérifie l'URL de déploiement dans les réglages.",
-      );
+      throw new Error(this.i18n.t('error.badResponse'));
     }
-    if (!payload.ok) throw new Error(payload.error || 'Erreur inconnue.');
+    if (!payload.ok) throw new Error(payload.error || this.i18n.t('error.unknown'));
     return payload as T;
   }
 
   private require(): string {
     const endpoint = this.settings.endpoint();
-    if (!endpoint) throw new Error("L'app n'est pas encore configurée.");
+    if (!endpoint) throw new Error(this.i18n.t('error.unconfigured'));
     return endpoint;
   }
 }
@@ -115,7 +115,9 @@ function toWireOperation(op: Operation) {
     row: op.row,
     nameColumn: op.nameColumn,
     sessionColumn: op.sessionColumn,
+    commentColumn: op.commentColumn,
     name: op.name,
     present: op.present,
+    text: op.text,
   };
 }

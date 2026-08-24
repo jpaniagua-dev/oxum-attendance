@@ -12,33 +12,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
+import { I18nService, MessageKey } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
-import { fold, longDate, plural } from '../../core/format';
+import { fold, longDate } from '../../core/format';
 import { Category, Group, Role, Student } from '../../core/models';
-
-const CATEGORY_LABELS: Record<Category, string> = {
-  active: 'Inscrits',
-  trial: "Cours d'essai",
-  helper: 'Aide',
-};
-
-const ROLE_LABELS: Record<Role, string> = {
-  leader: 'Leaders',
-  follower: 'Followers',
-};
-
-/** Singular forms, for the one-line detail under a name in the present list. */
-const CATEGORY_ONE: Record<Category, string> = {
-  active: 'Inscrit',
-  trial: 'Essai',
-  helper: 'Aide',
-};
-
-const ROLE_ONE: Record<Role, string> = {
-  leader: 'Leader',
-  follower: 'Follower',
-};
 
 const CATEGORY_ORDER: Category[] = ['active', 'trial', 'helper'];
 
@@ -50,10 +28,11 @@ interface WaitingGroup {
   students: Student[];
 }
 
-interface PresentItem {
+interface Entry {
   key: string;
   name: string;
   detail: string;
+  comment: string;
   arrival: number;
   /** Absent for a walk-in: it is already written to the sheet and stays. */
   group: Group | null;
@@ -86,6 +65,9 @@ export class Roster {
   protected readonly store = inject(SessionStore);
   protected readonly settings = inject(SettingsService);
   protected readonly api = inject(ApiService);
+  protected readonly i18n = inject(I18nService);
+
+  protected readonly t = this.i18n.t.bind(this.i18n);
 
   private readonly routeId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
@@ -101,31 +83,27 @@ export class Roster {
   protected readonly walkinRole = signal<Role | null>(null);
   protected readonly walkinError = signal<string | null>(null);
 
+  protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
+  protected readonly noteText = signal('');
+
   private highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly course = this.store.course;
-  protected readonly date = computed(() => longDate(this.store.date()));
+  protected readonly date = computed(() => longDate(this.store.date(), this.i18n.locale()));
   protected readonly tally = this.store.tally;
 
   /** Present names, most recently arrived first. */
-  protected readonly present = computed<PresentItem[]>(() => {
+  protected readonly present = computed<Entry[]>(() => {
     const course = this.course();
     if (!course) return [];
     const needle = fold(this.search());
-    const items: PresentItem[] = [];
+    const items: Entry[] = [];
 
     for (const group of [...course.groups].sort(byCategoryThenRole)) {
       for (const student of group.students) {
         if (!this.store.isPresent(course.id, group, student)) continue;
         if (needle && !fold(student.name).includes(needle)) continue;
-        items.push({
-          key: `${group.key}#${student.row}`,
-          name: student.name,
-          detail: `${CATEGORY_ONE[group.category]} · ${ROLE_ONE[group.role]}`,
-          arrival: this.store.arrivalOf(course.id, group.key, student.row),
-          group,
-          student,
-        });
+        items.push(this.entryOf(course.id, group, student));
       }
     }
 
@@ -134,7 +112,8 @@ export class Roster {
       items.push({
         key: `extra#${extra.uid}`,
         name: extra.name,
-        detail: `Essai · ${ROLE_ONE[extra.role]}`,
+        detail: `${this.t('category.trialOne')} · ${this.roleOne(extra.role)}`,
+        comment: '',
         arrival: this.store.arrivalOf(course.id, extra.groupKey, extra.row),
         group: null,
         student: null,
@@ -181,6 +160,18 @@ export class Roster {
     this.destroyRef.onDestroy(() => this.clearHighlight());
   }
 
+  private entryOf(courseId: string, group: Group, student: Student): Entry {
+    return {
+      key: `${group.key}#${student.row}`,
+      name: student.name,
+      detail: `${this.categoryOne(group.category)} · ${this.roleOne(group.role)}`,
+      comment: this.store.commentOf(courseId, group, student),
+      arrival: this.store.arrivalOf(courseId, group.key, student.row),
+      group,
+      student,
+    };
+  }
+
   // -------------------------------------------------------------------------
   // Marking
   // -------------------------------------------------------------------------
@@ -198,7 +189,7 @@ export class Roster {
    * A tap in the present list asks before removing. The device is handed
    * around, and a mis-tap must not quietly unmark someone standing right there.
    */
-  protected tapPresent(item: PresentItem): void {
+  protected tapPresent(item: Entry): void {
     if (!item.group || !item.student) return;
     this.untick.set({ group: item.group, student: item.student });
   }
@@ -238,6 +229,38 @@ export class Roster {
       clearTimeout(this.highlightTimer);
       this.highlightTimer = null;
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Notes
+  // -------------------------------------------------------------------------
+
+  protected commentOf(group: Group, student: Student): string {
+    const course = this.course();
+    return course ? this.store.commentOf(course.id, group, student) : '';
+  }
+
+  protected openNote(group: Group, student: Student): void {
+    this.noteText.set(this.commentOf(group, student));
+    this.noteFor.set({ group, student });
+  }
+
+  protected closeNote(): void {
+    this.noteFor.set(null);
+  }
+
+  protected onNoteText(event: Event): void {
+    this.noteText.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  protected saveNote(event: Event): void {
+    event.preventDefault();
+    const target = this.noteFor();
+    const course = this.course();
+    if (!target || !course) return;
+
+    this.store.setComment(course, target.group, target.student, this.noteText());
+    this.noteFor.set(null);
   }
 
   // -------------------------------------------------------------------------
@@ -282,13 +305,13 @@ export class Roster {
     const name = this.walkinName().trim().replace(/\s+/g, ' ');
 
     if (!course || !role || !name) {
-      this.walkinError.set('Il faut un nom et un rôle.');
+      this.walkinError.set(this.t('walkin.error'));
       return;
     }
 
     const outcome = this.store.addTrial(course, role, name);
     if (!outcome.ok) {
-      this.walkinError.set(outcome.reason ?? 'Impossible d’ajouter ce nom.');
+      this.walkinError.set(outcome.reason ?? this.t('walkin.error'));
       return;
     }
 
@@ -302,27 +325,37 @@ export class Roster {
   // -------------------------------------------------------------------------
 
   protected labelOf(group: Group): string {
-    return `${CATEGORY_LABELS[group.category]} — ${ROLE_LABELS[group.role]}`;
+    return `${this.t(`category.${group.category}` as MessageKey)} — ${this.t(
+      group.role === 'leader' ? 'role.leaders' : 'role.followers',
+    )}`;
   }
 
   protected roleLabel(role: Role): string {
-    return ROLE_LABELS[role];
+    return this.t(role === 'leader' ? 'role.leaders' : 'role.followers');
+  }
+
+  private roleOne(role: Role): string {
+    return this.t(role === 'leader' ? 'role.leader' : 'role.follower');
+  }
+
+  private categoryOne(category: Category): string {
+    return this.t(`category.${category}One` as MessageKey);
   }
 
   protected presentWord(count: number): string {
-    return plural(count, 'présent', 'présents');
+    return this.t(count > 1 ? 'roster.hereMany' : 'roster.hereOne');
   }
 
   protected syncLabel(): string {
     switch (this.store.sync()) {
       case 'sending':
-        return 'Envoi…';
+        return this.t('sync.sending');
       case 'pending':
-        return `${this.store.queue().length} en attente`;
+        return this.t('sync.pending', { n: this.store.queue().length });
       case 'offline':
-        return 'Hors ligne';
+        return this.t('sync.offline');
       default:
-        return 'À jour';
+        return this.t('sync.idle');
     }
   }
 

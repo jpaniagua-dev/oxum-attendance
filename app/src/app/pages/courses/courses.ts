@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { I18nService } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { longDate } from '../../core/format';
@@ -23,8 +24,10 @@ export class Courses {
   private readonly router = inject(Router);
   protected readonly store = inject(SessionStore);
   protected readonly settings = inject(SettingsService);
+  protected readonly i18n = inject(I18nService);
 
-  protected readonly date = computed(() => longDate(this.store.date()));
+  protected readonly t = this.i18n.t.bind(this.i18n);
+  protected readonly date = computed(() => longDate(this.store.date(), this.i18n.locale()));
   protected readonly courses = this.store.visibleCourses;
 
   /** Workbooks that answered with an error, surfaced instead of swallowed. */
