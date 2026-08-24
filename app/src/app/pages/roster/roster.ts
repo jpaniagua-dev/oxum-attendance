@@ -61,10 +61,12 @@ interface Section {
  * than getting blocks of their own: someone hunting for their name cares which
  * side they dance, not which category the school files them under.
  *
- * There is no confirmation dialog. The tapped name leaves the expected list and
- * appears at the top of the matching present one, the page scrolls up to it and
- * it holds a highlight for a moment — the movement itself is the receipt, and
- * nothing blocks the next person from stepping up.
+ * There is no confirmation dialog and nothing moves the page under the reader:
+ * the tapped card simply leaves the expected list for the present one further
+ * down, and the count in the sticky header goes up. A card that stays on screen
+ * also holds a highlight for a moment. Scrolling the page for them was worse
+ * than the problem it solved — the screen jumped under a finger that was about
+ * to hand the phone over.
  */
 @Component({
   selector: 'app-roster',
@@ -152,11 +154,13 @@ export class Roster {
       });
     }
 
+    // Expected first: it is the list being worked through, and the one a
+    // student is sent to. Present names are the record, not the task.
     const order: { key: string; present: boolean; role: Role }[] = [
-      { key: 'present:leader', present: true, role: 'leader' },
-      { key: 'present:follower', present: true, role: 'follower' },
       { key: 'waiting:leader', present: false, role: 'leader' },
       { key: 'waiting:follower', present: false, role: 'follower' },
+      { key: 'present:leader', present: true, role: 'leader' },
+      { key: 'present:follower', present: true, role: 'follower' },
     ];
 
     return order
@@ -242,14 +246,12 @@ export class Roster {
   }
 
   /**
-   * Puts the moved card at the top of the screen and rings it briefly, then
-   * clears the search so the next person starts from a clean field.
+   * Rings the moved card briefly and clears the search, so the next person
+   * starts from a clean field. The page is deliberately left where it is.
    */
   private flag(key: string): void {
     this.search.set('');
     this.highlighted.set(key);
-
-    scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' });
 
     this.clearHighlight();
     this.highlightTimer = setTimeout(() => {
@@ -445,8 +447,4 @@ function byRosterOrder(a: Entry, b: Entry): number {
   const byCategory = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
   if (byCategory !== 0) return byCategory;
   return (a.student?.row ?? 0) - (b.student?.row ?? 0);
-}
-
-function reducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
