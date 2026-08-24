@@ -178,7 +178,13 @@ The site then lives at `https://<owner>.github.io/<repo>/`.
 3. Install it: *Share → Add to Home Screen* on iOS, *Install app* on Android.
 
 The four-digit code guards the settings screen, because the device is handed around
-during class. It is stored on the device and is not the `KIOSK_TOKEN`.
+during class. It is stored on the device and is not the `KIOSK_TOKEN`. **Leaving the
+screen locks it again** — a back button that reopens an unlocked settings page protects
+nothing. There is deliberately no recovery: a forgotten code means clearing the site data
+for the app, which also clears the deployment URL and token.
+
+The theme follows the device by default — a studio is bright in the afternoon and dim at
+night, and a phone already switches on its own. Settings can force light or dark instead.
 
 **Demo mode**: the settings screen can load an invented studio, so the interface can be
 tried and shown around before any Apps Script deployment exists. Nothing is written in
@@ -191,6 +197,10 @@ npm test                 # backend parser and writer, no network needed
 npm --prefix app start   # dev server
 npm run build            # production build
 ```
+
+On some constrained hosts esbuild's Go runtime deadlocks or segfaults partway through a
+build. `GOMAXPROCS=1 NG_BUILD_MAX_WORKERS=1 npx ng build` avoids it; the CI runner does
+not need either.
 
 The tests load `Code.gs` into a `vm` context with Apps Script stubs and run it against
 grids rebuilt to match the real workbooks — **with invented names**. The school's actual

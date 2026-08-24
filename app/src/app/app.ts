@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SessionStore } from './core/session.store';
+import { ThemeService } from './core/theme.service';
 
 /**
  * Shell. Each screen brings its own header; what lives here is the one thing
@@ -16,4 +17,7 @@ import { SessionStore } from './core/session.store';
 })
 export class App {
   protected readonly store = inject(SessionStore);
+
+  /** Injected for its side effect: it stamps the chosen theme on the root. */
+  private readonly theme = inject(ThemeService);
 }

@@ -1,11 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../core/api.service';
 import { DEMO_ENDPOINT } from '../../core/demo';
 import { SessionStore, messageOf } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
+import { ThemeService, ThemeChoice } from '../../core/theme.service';
 import { Course, Workbook } from '../../core/models';
+
+const THEMES: { value: ThemeChoice; label: string }[] = [
+  { value: 'system', label: 'Appareil' },
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+];
 
 type Probe = { kind: 'idle' | 'testing' | 'ok' | 'error'; message?: string };
 
@@ -26,8 +40,12 @@ type Probe = { kind: 'idle' | 'testing' | 'ok' | 'error'; message?: string };
 })
 export class Settings {
   private readonly api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly settings = inject(SettingsService);
   protected readonly store = inject(SessionStore);
+  protected readonly theme = inject(ThemeService);
+
+  protected readonly themes = THEMES;
 
   protected readonly endpoint = signal(this.settings.endpoint());
   protected readonly token = signal(this.settings.token());
@@ -54,6 +72,13 @@ export class Settings {
     if (this.settings.configured() && this.settings.settingsOpen()) {
       void this.loadWorkbooks();
     }
+
+    // Leaving the screen locks it again, whichever way you leave.
+    this.destroyRef.onDestroy(() => this.settings.lock());
+  }
+
+  protected chooseTheme(choice: ThemeChoice): void {
+    this.theme.set(choice);
   }
 
   // -------------------------------------------------------------------------

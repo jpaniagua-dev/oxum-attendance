@@ -123,6 +123,26 @@
       </div>
     </section>
 
+    <!-- Appearance ------------------------------------------------------- -->
+    <section class="card">
+      <h2>Apparence</h2>
+      <p class="note">
+        « Appareil » suit le réglage du téléphone&nbsp;: clair en journée, sombre le soir,
+        sans rien toucher. Les deux autres forcent un thème quoi qu'il arrive.
+      </p>
+      <div class="segmented" role="group" aria-label="Thème">
+        @for (option of themes; track option.value) {
+          <button
+            type="button"
+            [attr.aria-pressed]="theme.current() === option.value"
+            (click)="chooseTheme(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </section>
+
     <!-- Workbooks -------------------------------------------------------- -->
     <section class="card">
       <h2>Classeurs Google Sheets</h2>

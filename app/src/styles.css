@@ -1,28 +1,46 @@
 /*
  * Attendance — global tokens and shared controls.
  *
- * Committed to a single dark theme on purpose: this runs on a phone or tablet
- * held up in a dance studio under low light, not in a browser whose owner
- * picked a preference. Every colour is painted explicitly.
+ * Palette and both typefaces come from the school's own identity: the amber of
+ * the "DANCE STUDIO" wordmark as the single accent, on a warm neutral ground.
+ * Nothing else is allowed to be loud.
  *
- * Palette and both typefaces come from the school's own identity — warm near
- * black, silver-white type, and the amber of the "DANCE STUDIO" wordmark as the
- * single accent. Nothing else is allowed to be loud.
+ * Three theme states, not two. `:root` carries the complete light palette and
+ * is what an un-stamped document gets; the media query flips it for a device
+ * set to dark, guarded so an explicit light choice still wins; and the
+ * `[data-theme]` blocks let the in-app switch override the device either way.
+ * Components only ever read tokens, never a literal colour — a colour defined
+ * solely inside one of those blocks would be missing in the other states.
+ *
+ * The amber that fills a button is not the amber that can be read as text on a
+ * pale ground, hence the split between `--accent` and `--accent-text`.
  */
 
 :root {
-  --ink: #0e0d0c;
-  --surface: #191614;
-  --surface-hi: #221e1b;
-  --line: #322c27;
-  --text: #f6f1e9;
-  --muted: #a69c91;
-  --faint: #6d645c;
+  --ink: #faf7f2;
+  --surface: #ffffff;
+  --surface-hi: #f2ede4;
+  --line: #e3dbcf;
+  --text: #1a1613;
+  --muted: #6d6459;
+  --faint: #a79c8e;
+
   --accent: #fbc11f;
-  --accent-deep: #d9a20d;
+  --accent-strong: #e8ae0c;
   --accent-ink: #17130a;
-  --danger: #e4695b;
-  --good: #7ec98f;
+  --accent-text: #8f6805;
+  --accent-soft: rgba(251, 193, 31, 0.2);
+
+  --danger: #b3392c;
+  --danger-soft: rgba(179, 57, 44, 0.1);
+  --good: #2f7d4a;
+  --good-soft: rgba(47, 125, 74, 0.1);
+
+  --scrim: rgba(250, 247, 242, 0.94);
+  --scrim-strong: rgba(250, 247, 242, 0.96);
+  --scrim-solid: rgba(250, 247, 242, 0.98);
+
+  --masthead: linear-gradient(180deg, #ffffff 0%, var(--ink) 100%);
 
   --step-0: 1rem;
   --step-1: 1.125rem;
@@ -37,6 +55,64 @@
   --display: 'Outfit', 'Inter', system-ui, sans-serif;
 }
 
+/* A device set to dark, unless the in-app switch asked for light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #0e0d0c;
+    --surface: #191614;
+    --surface-hi: #221e1b;
+    --line: #322c27;
+    --text: #f6f1e9;
+    --muted: #a69c91;
+    --faint: #6d645c;
+
+    --accent: #fbc11f;
+    --accent-strong: #d9a20d;
+    --accent-ink: #17130a;
+    --accent-text: #fbc11f;
+    --accent-soft: rgba(251, 193, 31, 0.09);
+
+    --danger: #e4695b;
+    --danger-soft: rgba(228, 105, 91, 0.1);
+    --good: #7ec98f;
+    --good-soft: rgba(126, 201, 143, 0.1);
+
+    --scrim: rgba(14, 13, 12, 0.94);
+    --scrim-strong: rgba(14, 13, 12, 0.95);
+    --scrim-solid: rgba(14, 13, 12, 0.97);
+
+    --masthead: linear-gradient(180deg, #191614 0%, var(--ink) 100%);
+  }
+}
+
+/* The in-app switch, which must win over the device in both directions. */
+:root[data-theme='dark'] {
+  --ink: #0e0d0c;
+  --surface: #191614;
+  --surface-hi: #221e1b;
+  --line: #322c27;
+  --text: #f6f1e9;
+  --muted: #a69c91;
+  --faint: #6d645c;
+
+  --accent: #fbc11f;
+  --accent-strong: #d9a20d;
+  --accent-ink: #17130a;
+  --accent-text: #fbc11f;
+  --accent-soft: rgba(251, 193, 31, 0.09);
+
+  --danger: #e4695b;
+  --danger-soft: rgba(228, 105, 91, 0.1);
+  --good: #7ec98f;
+  --good-soft: rgba(126, 201, 143, 0.1);
+
+  --scrim: rgba(14, 13, 12, 0.94);
+  --scrim-strong: rgba(14, 13, 12, 0.95);
+  --scrim-solid: rgba(14, 13, 12, 0.97);
+
+  --masthead: linear-gradient(180deg, #191614 0%, var(--ink) 100%);
+}
+
 *,
 *::before,
 *::after {
@@ -45,6 +121,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  background: var(--ink);
 }
 
 body {
@@ -123,8 +200,8 @@ p {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-deep);
-  border-color: var(--accent-deep);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
 }
 
 .btn-ghost {
@@ -160,7 +237,7 @@ p {
 }
 
 :where(button, input, a, [tabindex]):focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-text);
   outline-offset: 3px;
 }
 
@@ -218,21 +295,21 @@ p {
 
 .message {
   padding: 0.85rem 1rem;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-text);
   border-left-width: 3px;
   border-radius: 10px;
-  background: rgba(251, 193, 31, 0.09);
+  background: var(--accent-soft);
   font-size: 0.95rem;
 }
 
 .message.error {
   border-color: var(--danger);
-  background: rgba(228, 105, 91, 0.1);
+  background: var(--danger-soft);
 }
 
 .message.good {
   border-color: var(--good);
-  background: rgba(126, 201, 143, 0.1);
+  background: var(--good-soft);
 }
 
 /* ---------------------------------------------------------------------------
@@ -246,7 +323,7 @@ p {
   display: grid;
   place-items: center;
   padding: var(--edge);
-  background: rgba(14, 13, 12, 0.95);
+  background: var(--scrim-strong);
   backdrop-filter: blur(6px);
 }
 
@@ -262,6 +339,43 @@ p {
   gap: var(--gap);
   justify-content: flex-end;
   margin-top: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Segmented control — used for the theme switch
+   --------------------------------------------------------------------------- */
+
+.segmented {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ink);
+}
+
+.segmented button {
+  flex: 1;
+  padding: 0.6rem 0.5rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: reduce) {

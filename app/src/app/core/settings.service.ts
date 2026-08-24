@@ -41,6 +41,10 @@ export class SettingsService {
    * Settings are reachable when there is no PIN yet, or after entering it.
    * Without the first case an unconfigured install would lock out the very
    * screen needed to configure it.
+   *
+   * Unlocking lasts exactly as long as the visit: leaving the screen locks it
+   * again. The device spends the class in a student's hands, and a settings
+   * page that stays open behind a back button is not protected at all.
    */
   readonly settingsOpen = computed(() => !this.hasPin() || this.unlockedNow());
 
@@ -50,6 +54,10 @@ export class SettingsService {
     next.token = next.token.trim();
     this.stored.set(next);
     this.write(next);
+
+    // Setting the very first PIN would otherwise drop the gate over the page
+    // the person is still standing on.
+    if (patch.pin) this.unlockedNow.set(true);
   }
 
   unlock(candidate: string): boolean {

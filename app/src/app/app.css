@@ -4,7 +4,7 @@
   border: 1px solid var(--danger);
   border-left-width: 3px;
   border-radius: 10px;
-  background: rgba(228, 105, 91, 0.1);
+  background: var(--danger-soft);
   color: var(--text);
   font-size: 0.95rem;
   line-height: 1.5;

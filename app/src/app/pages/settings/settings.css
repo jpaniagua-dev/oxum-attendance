@@ -10,7 +10,7 @@
   gap: 0.85rem;
   padding: calc(1rem + env(safe-area-inset-top)) var(--edge) 1rem;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--surface) 0%, var(--ink) 100%);
+  background: var(--masthead);
 }
 
 .masthead h1 {
