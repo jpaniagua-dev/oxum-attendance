@@ -282,7 +282,17 @@ export class SessionStore {
 
       this.queue.update((current) => {
         const handled = new Set(batch.map((op) => op.uid));
-        const next = [...current.filter((op) => !handled.has(op.uid)), ...failed];
+        const kept = current.filter((op) => !handled.has(op.uid));
+        // A tap that happened while the batch was in flight already holds the
+        // final state of that cell. Re-queuing the failed older operation would
+        // write the stale value last and undo it.
+        const superseded = new Set(
+          kept.filter((op) => op.kind === 'mark').map(cellKey),
+        );
+        const retry = failed.filter(
+          (op) => op.kind !== 'mark' || !superseded.has(cellKey(op)),
+        );
+        const next = [...kept, ...retry];
         writeJson(QUEUE_KEY, next);
         return next;
       });
@@ -323,13 +333,13 @@ export class SessionStore {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Identifies the one cell an operation writes to. */
+function cellKey(op: Operation): string {
+  return `${op.spreadsheetId}::${op.sheetName}::${op.row}::${op.sessionColumn}`;
+}
+
 function sameCell(a: Operation, b: Operation): boolean {
-  return (
-    a.spreadsheetId === b.spreadsheetId &&
-    a.sheetName === b.sheetName &&
-    a.row === b.row &&
-    a.sessionColumn === b.sessionColumn
-  );
+  return cellKey(a) === cellKey(b);
 }
 
 function overrideKey(courseId: string, groupKey: string, row: number): string {
