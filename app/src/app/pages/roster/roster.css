@@ -283,12 +283,22 @@ main.waiting-screen {
 }
 
 /*
- * The only thing a card says beyond the name. A pill rather than a subtitle,
- * so it reads as a marker on a few cards instead of a caption under every one.
+ * The only thing a card says beyond the name. Pinned under the tick box rather
+ * than flowing after the name, so it lands in the same spot on every card it
+ * appears on and a long name never pushes it around.
+ *
+ * `.tagged` reserves the room: the badge is out of flow, so without the extra
+ * height it would sit on top of a name that wrapped.
  */
+.name.tagged .pick {
+  min-height: 92px;
+  padding-bottom: 1.7rem;
+}
+
 .label small {
-  display: inline-block;
-  margin-top: 0.3rem;
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.55rem;
   padding: 0.1rem 0.45rem;
   border: 1px solid currentColor;
   border-radius: 999px;
