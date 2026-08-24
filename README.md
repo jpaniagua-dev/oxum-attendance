@@ -1,65 +1,65 @@
-# Présence cours — kiosque
+# Attendance kiosk
 
-Prise de présence pour les cours de danse de Julio chez Bachata Geneva Dance Studio.
-Une tablette posée en salle, l'élève coche son nom, les présences partent dans le
-Google Sheet de l'école en fin de cours.
+Attendance taking for Julio's dance classes at Bachata Geneva Dance Studio. A tablet
+sits in the room, students tap their own name on arrival, and the teacher pushes the
+session into the school's Google Sheet at the end of the class.
 
-Contexte, décisions et questions ouvertes : fiche du hub `projets/presence-cours.md`.
+Background, decisions and open questions live in the hub: `projets/presence-cours.md`.
 
-## Comment ça tient debout
+Interface copy is French because the students read it. Everything else here — code,
+comments, commits, this file — is English.
 
-Les deux classeurs appartiennent à l'école et sont partagés **en édition** avec
-`julio@paniagua.dev`. Le back-end est un **Apps Script déployé en web app**, exécuté
-sous ce compte : il hérite des droits sans qu'aucun secret Google n'existe côté projet.
-Pas de compte de service, pas de jeton OAuth, rien à héberger.
+## Why it works without secrets
 
-## Structure des classeurs
+Both workbooks belong to the school and are shared **with edit rights** with
+`julio@paniagua.dev`. The backend is an **Apps Script web app deployed as that user**,
+so it inherits those rights: no service account, no OAuth secret, nothing to host.
 
-Le parseur ne connaît **aucune adresse fixe**. Il repère les blocs par leur titre et
-déduit tout le reste. C'est volontaire : la grille est tenue à la main par l'école et
-bouge d'une saison à l'autre.
+## Workbook layout
 
-Un onglet est une pile de **sections**, une par cours (`Julio & Diana - Inter-Avancé 1`).
-Une section se lit en deux moitiés indépendantes : **leaders à gauche, followers à
-droite**. Chaque moitié empile trois blocs :
+The parser knows **no fixed addresses**. It locates blocks by their titles and derives
+every other cell from there — deliberately, because the grid is maintained by hand and
+shifts from one season to the next.
 
-| Bloc | `category` |
-|------|-----------|
+A tab is a stack of **sections**, one per class (`Julio & Diana - Inter-Avancé 1`). Each
+section is two independent half-grids side by side: **leaders on the left, followers on
+the right**. Each half stacks three blocks:
+
+| Block title | `category` |
+|-------------|-----------|
 | `Leaders / Followers actifs` | `active` |
 | `Essais Leader / Follower` | `trial` |
 | `Aide Leader / Follower` | `helper` |
 
-Sous chaque titre de bloc : une ligne d'en-tête `N° | Nom | <dates…> | Commentaires`,
-puis des lignes numérotées. **Une ligne numérotée sans nom est une place libre** — c'est
-là qu'un élève d'essai non listé est inscrit.
+Under each block title sits a header row — `N° | Nom | <dates…> | Commentaires` — then
+numbered rows. **A numbered row with no name is a free slot**, and that is where a
+walk-in trial student gets written.
 
-Pièges que le code traite explicitement :
+Traps the code handles explicitly:
 
-- **Les deux moitiés ont des colonnes différentes** (dates en D-I à gauche, N-S à droite)
-  mais **les mêmes numéros de ligne**. Une ligne n'a de sens que dans son bloc : le code
-  ne cherche jamais une ligne à l'échelle du cours.
-- **Les lignes de totaux sont des formules.** Seules les cellules des lignes nommées sont
-  écrites, jamais une ligne de structure.
-- **Le nombre de lignes par bloc n'est pas constant** (7 le plus souvent, 9 observé).
-  La lecture s'arrête quand la colonne `N°` cesse de contenir un nombre.
-- **Les en-têtes de dates sont tantôt de vraies dates, tantôt du texte.** Les deux sont
-  ramenés à une clé `MM-JJ` ; le millésime est ignoré, une saison va d'août à juin.
+- **The two halves use different columns** (dates in D–I on the left, N–S on the right)
+  but **share row numbers**. A row only means something inside its own block, so a row is
+  never resolved at course level.
+- **Totals rows are formulas.** Only cells on named roster rows are ever written.
+- **Block height is not constant** (usually 7 rows, 9 seen in the wild). Reading stops
+  when the `N°` column stops holding a number.
+- **Date headers are sometimes real dates, sometimes typed text.** Both collapse to an
+  `MM-DD` key; the year is ignored, since a season runs August to June.
 
 ## API
 
-Réponse toujours en HTTP 200 avec un drapeau `ok` — Apps Script ne permet pas de choisir
-le code de statut.
+Every response is HTTP 200 with an `ok` flag — Apps Script cannot choose a status code.
 
-### `GET ?token=…&date=AAAA-MM-JJ`
+### `GET ?token=…&date=YYYY-MM-DD`
 
-`date` est optionnelle et vaut aujourd'hui. Renvoie tous les cours des deux classeurs :
+`date` is optional and defaults to today. Returns every class in both workbooks:
 
 ```json
 {
   "ok": true,
   "date": "2026-08-25",
   "courses": [{
-    "id": "<idClasseur>::<onglet>::<ligneDuTitre>",
+    "id": "<workbookId>::<tabName>::<titleRow>",
     "title": "Julio & Diana - Inter-Avancé 1",
     "hasSession": true,
     "sessionLabels": ["25.08", "1.09", "…"],
@@ -74,8 +74,8 @@ le code de statut.
 }
 ```
 
-`hasSession: false` signifie qu'aucune colonne ne correspond à la date : l'app doit le
-dire, pas écrire ailleurs.
+`hasSession: false` means no column matches that date. The kiosk must say so rather than
+write somewhere else.
 
 ### `POST`
 
@@ -85,32 +85,56 @@ dire, pas écrire ailleurs.
   "courseId": "…",
   "date": "2026-08-25",
   "marks": [{ "group": "leader:active", "row": 12, "name": "…", "present": true }],
-  "additions": [{ "role": "follower", "name": "Prénom N.", "present": true }]
+  "additions": [{ "role": "follower", "name": "Camille B.", "present": true }]
 }
 ```
 
-Le classeur est **relu au moment de l'écriture**. Une marque n'est appliquée que si le
-nom présent à cette ligne est toujours celui que le kiosque croyait : sinon elle part
-dans `rejected` avec sa raison. Rien n'est deviné. Les absents sont écrits `FALSE`.
+The workbook is **re-read at write time**. A mark is applied only if the name still
+sitting on that row is the one the kiosk believed was there; otherwise it goes to
+`rejected` with a reason. Nothing is guessed. Unticked students are written `FALSE`.
 
-`marks` doit porter `group` : sans lui une ligne est ambiguë entre leader et follower.
+`marks` must carry `group`: without it a row is ambiguous between leader and follower.
 
-## Déploiement
+Post from a browser with `Content-Type: text/plain;charset=utf-8`. Apps Script does not
+answer CORS preflight, and any other content type triggers one.
 
-1. Créer un projet Apps Script **autonome** sur `julio@paniagua.dev`
-   (script.google.com → Nouveau projet), y coller `apps-script/Code.gs` et le contenu de
+## Deploying the backend
+
+1. Create a **standalone** Apps Script project on `julio@paniagua.dev`
+   (script.google.com → new project). Paste in `apps-script/Code.gs` and the contents of
    `apps-script/appsscript.json`.
-2. Paramètres du projet → Propriétés du script → ajouter `KIOSK_TOKEN` avec une valeur
-   longue et aléatoire. **Sans elle le script refuse toute requête.**
-3. Déployer → Nouveau déploiement → Application web :
-   « Exécuter en tant que **moi** », « Accès : **tout le monde** ».
-   L'accès anonyme est nécessaire — la tablette n'est pas connectée à un compte Google.
-   C'est le `KIOSK_TOKEN` qui protège l'écriture, pas la connexion.
-4. Ranger l'URL du déploiement dans `pass` :
-   `pass insert projets/presence-cours/apps-script-url`, et le jeton dans
-   `pass insert projets/presence-cours/kiosk-token`. **Ni l'un ni l'autre dans le dépôt.**
+2. Project settings → Script properties → add `KIOSK_TOKEN` with a long random value.
+   **The script refuses every request until it is set.**
+3. Deploy → New deployment → Web app: run as **me**, access **anyone**.
+   Anonymous access is required — the tablet is not signed into a Google account. The
+   `KIOSK_TOKEN` is what protects writes, not the sign-in.
+4. Store both values in `pass`, never in this repo:
+   `pass insert projets/presence-cours/apps-script-url`
+   `pass insert projets/presence-cours/kiosk-token`
 
-L'URL de déploiement vaut droit d'écriture : la traiter comme un secret.
+The deployment URL is itself a write credential. Treat it as a secret.
+
+### What the token does and does not do
+
+`web/config.js` ships the token to the tablet's browser, so anyone who can read the
+kiosk page source can read the token. It stops the deployment being found and poked at;
+it is **not** authentication. The exposure is bounded on purpose: the worst a leak buys
+is writing attendance ticks into a sheet that keeps its own revision history. Do not
+extend this script to read or write anything more sensitive under the same token.
+
+## Deploying the kiosk
+
+`web/` is a static PWA — any HTTPS host will do (GitHub Pages, Netlify, Cloudflare
+Pages). HTTPS is required: service workers do not register over plain HTTP.
+
+1. Copy `web/config.example.js` to `web/config.js` and fill in the deployment URL and
+   token. `config.js` is git-ignored.
+2. Publish the contents of `web/`.
+3. Open it on the tablet and use the browser's "add to home screen" so it launches
+   full screen.
+
+Without `config.js` the page runs in **demo mode** on built-in sample data — useful for
+looking at the interface without touching a real workbook.
 
 ## Tests
 
@@ -118,6 +142,6 @@ L'URL de déploiement vaut droit d'écriture : la traiter comme un secret.
 npm test
 ```
 
-Les tests chargent `Code.gs` dans un contexte `vm` avec des bouchons Apps Script, et le
-font tourner sur des grilles reconstruites à l'identique des vrais classeurs — **avec des
-noms inventés**. La liste réelle des élèves de l'école n'entre pas dans ce dépôt.
+The tests load `Code.gs` into a `vm` context with Apps Script stubs and run it against
+grids rebuilt to match the real workbooks — **with invented names**. The school's actual
+roster never enters this repo.

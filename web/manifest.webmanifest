@@ -1,0 +1,17 @@
+{
+  "name": "Présences — Bachata Geneva",
+  "short_name": "Présences",
+  "description": "Prise de présence en salle pour les cours de danse.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0E0D0C",
+  "theme_color": "#0E0D0C",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

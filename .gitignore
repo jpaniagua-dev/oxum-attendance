@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# Deployment URL and token — see web/config.example.js
+web/config.js

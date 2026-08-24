@@ -5,6 +5,7 @@
   "description": "Attendance kiosk for Julio's dance classes at Bachata Geneva Dance Studio",
   "type": "module",
   "scripts": {
-    "test": "node --test 'apps-script/test/*.test.mjs'"
+    "test": "node --test 'apps-script/test/*.test.mjs'",
+    "build:preview": "node tools/build-preview.mjs"
   }
 }
