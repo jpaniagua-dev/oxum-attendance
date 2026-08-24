@@ -49,6 +49,16 @@ export class SessionStore {
   private readonly overrides = signal<Record<string, boolean>>({});
   private readonly extras = signal<Extra[]>([]);
 
+  /**
+   * Arrival order within this session, so the person who just tapped sits at
+   * the top of the present list. It is the only feedback they get that the tap
+   * landed, now that nothing interrupts the screen to tell them.
+   *
+   * Session-only by design: the sheet stores a tick, not a time, so a reload
+   * falls back to roster order for anyone marked before the app was opened.
+   */
+  private readonly order = signal<Record<string, number>>({});
+
   readonly visibleCourses = computed(() =>
     this.courses().filter((course) => !course.hidden && !course.unreachable),
   );
@@ -120,6 +130,7 @@ export class SessionStore {
     this.stale.set(stale);
     this.overrides.set(readJson(overridesKey(payload.date), {}));
     this.extras.set(readJson(extrasKey(payload.date), [] as Extra[]));
+    this.order.set(readJson(orderKey(payload.date), {}));
 
     const current = this.courseId();
     if (current && !payload.courses.some((course) => course.id === current)) {
@@ -138,6 +149,11 @@ export class SessionStore {
   isPresent(courseId: string, group: Group, student: Student): boolean {
     const override = this.overrides()[overrideKey(courseId, group.key, student.row)];
     return override ?? student.present === true;
+  }
+
+  /** Higher means more recent; 0 for anyone already ticked when the app opened. */
+  arrivalOf(courseId: string, groupKey: string, row: number): number {
+    return this.order()[overrideKey(courseId, groupKey, row)] ?? 0;
   }
 
   extrasFor(courseId: string): Extra[] {
@@ -161,6 +177,7 @@ export class SessionStore {
     if (group.sessionColumn === null) return;
 
     this.setOverride(course.id, group.key, student.row, present);
+    this.recordArrival(course.id, group.key, student.row, present);
     this.enqueue({
       uid: uid(),
       kind: 'mark',
@@ -209,6 +226,7 @@ export class SessionStore {
       return next;
     });
 
+    this.recordArrival(course.id, group.key, slot.row, true);
     this.enqueue({
       uid: extra.uid,
       kind: 'trial',
@@ -311,11 +329,26 @@ export class SessionStore {
   private rollback(op: Operation): void {
     if (op.kind === 'mark') {
       this.setOverride(op.courseId, op.groupKey, op.row, !op.present);
+      this.recordArrival(op.courseId, op.groupKey, op.row, !op.present);
       return;
     }
     this.extras.update((current) => {
       const next = current.filter((extra) => extra.uid !== op.uid);
       writeJson(extrasKey(this.date()), next);
+      return next;
+    });
+  }
+
+  private recordArrival(courseId: string, groupKey: string, row: number, present: boolean): void {
+    this.order.update((current) => {
+      const key = overrideKey(courseId, groupKey, row);
+      const next = { ...current };
+      if (present) {
+        next[key] = Math.max(0, ...Object.values(current)) + 1;
+      } else {
+        delete next[key];
+      }
+      writeJson(orderKey(this.date()), next);
       return next;
     });
   }
@@ -356,6 +389,10 @@ function overridesKey(date: string): string {
 
 function extrasKey(date: string): string {
   return `attendance.extras.${date}`;
+}
+
+function orderKey(date: string): string {
+  return `attendance.order.${date}`;
 }
 
 function labelOfRole(role: Role): string {

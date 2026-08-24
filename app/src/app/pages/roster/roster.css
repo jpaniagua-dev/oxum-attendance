@@ -190,7 +190,7 @@ main {
   padding: 1.2rem var(--edge) calc(2.5rem + env(safe-area-inset-bottom));
 }
 
-main.waiting {
+main.waiting-screen {
   gap: 1rem;
   align-items: flex-start;
   justify-content: center;
@@ -280,31 +280,59 @@ main.waiting {
   stroke-dashoffset: 24;
 }
 
-.name[aria-pressed='true'],
-.name.added {
+.name.here {
   background: var(--present);
   border-color: var(--present-line);
   color: var(--present-ink);
   font-weight: 600;
 }
 
-.name[aria-pressed='true'] .box,
-.name.added .box {
+.name.here:hover:not(:disabled) {
+  background: var(--present);
   border-color: var(--present-ink);
 }
 
-.name[aria-pressed='true'] .box svg,
-.name.added .box svg {
-  stroke: var(--present-ink);
+.name.here .box {
+  border-color: var(--present-ink);
 }
 
-.name[aria-pressed='true'] .box svg,
-.name.added .box svg {
+.name.here .box svg {
+  stroke: var(--present-ink);
   animation: draw 220ms ease forwards;
 }
 
-.name.added {
+/* A walk-in is already written to the sheet; there is nothing to undo here. */
+.name.here:disabled {
+  opacity: 1;
   cursor: default;
+}
+
+/* The category, so the teacher can still tell an enrolled student from a trial. */
+.label small {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+/*
+ * The receipt for a tap, now that nothing interrupts the screen to give one:
+ * the card that just moved holds a ring for a moment at the top of the page.
+ */
+.name.just {
+  animation: settle 1800ms ease-out;
+}
+
+@keyframes settle {
+  0%,
+  60% {
+    box-shadow: 0 0 0 3px var(--present-line);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
 }
 
 @keyframes draw {
@@ -319,62 +347,6 @@ main.waiting {
 
 .walkin-trigger {
   align-self: flex-start;
-}
-
-/* ---------------------------------------------------------------------------
-   Confirmation — deliberately the loudest thing in the app, because it is read
-   from arm's length by someone already turning away.
-   --------------------------------------------------------------------------- */
-
-.confirm {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  border: 0;
-  background: var(--scrim-solid);
-  color: var(--text);
-  font: inherit;
-  text-align: center;
-  cursor: pointer;
-}
-
-.tick {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 0.4rem;
-  border-radius: 50%;
-  border: 2px solid var(--present-line);
-  background: var(--present);
-}
-
-.tick svg {
-  width: 48px;
-  height: 48px;
-  fill: none;
-  stroke: var(--present-ink);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 30;
-  stroke-dashoffset: 30;
-  animation: draw 320ms ease 60ms forwards;
-}
-
-.confirm strong {
-  font-family: var(--display);
-  font-size: var(--step-3);
-  font-weight: 700;
-}
-
-.who {
-  font-family: var(--display);
-  font-size: var(--step-2);
-  font-weight: 600;
-  color: var(--text);
 }
 
 /* ---------------------------------------------------------------------------

@@ -28,15 +28,36 @@ const ROLE_LABELS: Record<Role, string> = {
   follower: 'Followers',
 };
 
+/** Singular forms, for the one-line detail under a name in the present list. */
+const CATEGORY_ONE: Record<Category, string> = {
+  active: 'Inscrit',
+  trial: 'Essai',
+  helper: 'Aide',
+};
+
+const ROLE_ONE: Record<Role, string> = {
+  leader: 'Leader',
+  follower: 'Follower',
+};
+
 const CATEGORY_ORDER: Category[] = ['active', 'trial', 'helper'];
 
-/** How long the "c'est noté" panel stays up before the next student's turn. */
-const CONFIRM_MS = 2200;
+/** How long a freshly moved card stays highlighted. */
+const HIGHLIGHT_MS = 1800;
 
-interface FilteredGroup {
+interface WaitingGroup {
   group: Group;
   students: Student[];
-  present: number;
+}
+
+interface PresentItem {
+  key: string;
+  name: string;
+  detail: string;
+  arrival: number;
+  /** Absent for a walk-in: it is already written to the sheet and stays. */
+  group: Group | null;
+  student: Student | null;
 }
 
 /**
@@ -44,8 +65,13 @@ interface FilteredGroup {
  *
  * Everything here follows from students trickling in one at a time: a search
  * field so the teacher can say "cherche ton nom", a tap that reaches the sheet
- * on its own, and a confirmation that clears itself so the device is ready for
- * whoever walks in next — including the person who turns up half an hour late.
+ * on its own, and a list that splits into who is here and who is still
+ * expected.
+ *
+ * There is no confirmation dialog. The tapped name leaves the waiting list and
+ * appears at the top of "Présents", the page scrolls up to it and it holds a
+ * highlight for a moment — the movement itself is the receipt, and nothing
+ * blocks the next person from stepping up.
  */
 @Component({
   selector: 'app-roster',
@@ -67,7 +93,7 @@ export class Roster {
   );
 
   protected readonly search = signal('');
-  protected readonly confirmed = signal<string | null>(null);
+  protected readonly highlighted = signal<string | null>(null);
   protected readonly untick = signal<{ group: Group; student: Student } | null>(null);
 
   protected readonly walkinOpen = signal(false);
@@ -75,18 +101,52 @@ export class Roster {
   protected readonly walkinRole = signal<Role | null>(null);
   protected readonly walkinError = signal<string | null>(null);
 
-  private confirmTimer: ReturnType<typeof setTimeout> | null = null;
+  private highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly course = this.store.course;
   protected readonly date = computed(() => longDate(this.store.date()));
   protected readonly tally = this.store.tally;
-  protected readonly extras = computed(() => {
+
+  /** Present names, most recently arrived first. */
+  protected readonly present = computed<PresentItem[]>(() => {
     const course = this.course();
-    return course ? this.store.extrasFor(course.id) : [];
+    if (!course) return [];
+    const needle = fold(this.search());
+    const items: PresentItem[] = [];
+
+    for (const group of [...course.groups].sort(byCategoryThenRole)) {
+      for (const student of group.students) {
+        if (!this.store.isPresent(course.id, group, student)) continue;
+        if (needle && !fold(student.name).includes(needle)) continue;
+        items.push({
+          key: `${group.key}#${student.row}`,
+          name: student.name,
+          detail: `${CATEGORY_ONE[group.category]} · ${ROLE_ONE[group.role]}`,
+          arrival: this.store.arrivalOf(course.id, group.key, student.row),
+          group,
+          student,
+        });
+      }
+    }
+
+    for (const extra of this.store.extrasFor(course.id)) {
+      if (needle && !fold(extra.name).includes(needle)) continue;
+      items.push({
+        key: `extra#${extra.uid}`,
+        name: extra.name,
+        detail: `Essai · ${ROLE_ONE[extra.role]}`,
+        arrival: this.store.arrivalOf(course.id, extra.groupKey, extra.row),
+        group: null,
+        student: null,
+      });
+    }
+
+    // Anyone ticked before the app opened has no arrival number and sits below.
+    return items.sort((a, b) => b.arrival - a.arrival);
   });
 
-  /** Groups with at least one name matching the search, in reading order. */
-  protected readonly groups = computed<FilteredGroup[]>(() => {
+  /** Who is still expected, by block, with the present ones taken out. */
+  protected readonly waiting = computed<WaitingGroup[]>(() => {
     const course = this.course();
     if (!course) return [];
     const needle = fold(this.search());
@@ -96,17 +156,16 @@ export class Roster {
       .map((group) => ({
         group,
         students: group.students.filter(
-          (student) => !needle || fold(student.name).includes(needle),
+          (student) =>
+            !this.store.isPresent(course.id, group, student) &&
+            (!needle || fold(student.name).includes(needle)),
         ),
-        present: group.students.filter((student) =>
-          this.store.isPresent(course.id, group, student),
-        ).length,
       }))
       .filter((entry) => entry.students.length > 0);
   });
 
   protected readonly nothingFound = computed(
-    () => this.search().length > 0 && this.groups().length === 0,
+    () => this.search().length > 0 && !this.present().length && !this.waiting().length,
   );
 
   constructor() {
@@ -119,33 +178,29 @@ export class Roster {
       }
     });
 
-    this.destroyRef.onDestroy(() => this.clearConfirmTimer());
+    this.destroyRef.onDestroy(() => this.clearHighlight());
   }
 
   // -------------------------------------------------------------------------
   // Marking
   // -------------------------------------------------------------------------
 
-  protected isPresent(group: Group, student: Student): boolean {
-    const course = this.course();
-    return course ? this.store.isPresent(course.id, group, student) : false;
-  }
-
-  /**
-   * A tap on a name marks it present. A tap on someone already present asks
-   * first — the device is handed around, and a mis-tap must not quietly remove
-   * a student who is standing right there.
-   */
-  protected tap(group: Group, student: Student): void {
+  /** Marks a waiting student present: the card moves up to "Présents". */
+  protected arrive(group: Group, student: Student): void {
     const course = this.course();
     if (!course || !course.hasSession) return;
 
-    if (this.isPresent(group, student)) {
-      this.untick.set({ group, student });
-      return;
-    }
     this.store.mark(course, group, student, true);
-    this.celebrate(student.name);
+    this.flag(`${group.key}#${student.row}`);
+  }
+
+  /**
+   * A tap in the present list asks before removing. The device is handed
+   * around, and a mis-tap must not quietly unmark someone standing right there.
+   */
+  protected tapPresent(item: PresentItem): void {
+    if (!item.group || !item.student) return;
+    this.untick.set({ group: item.group, student: item.student });
   }
 
   protected confirmUntick(): void {
@@ -154,33 +209,34 @@ export class Roster {
     if (!pending || !course) return;
     this.store.mark(course, pending.group, pending.student, false);
     this.untick.set(null);
+    this.flag(`${pending.group.key}#${pending.student.row}`);
   }
 
   protected cancelUntick(): void {
     this.untick.set(null);
   }
 
-  /** Shows the name back to the student, then resets for the next arrival. */
-  private celebrate(name: string): void {
-    this.confirmed.set(name);
-    this.clearConfirmTimer();
-    this.confirmTimer = setTimeout(() => {
-      this.confirmed.set(null);
-      this.search.set('');
-      this.confirmTimer = null;
-    }, CONFIRM_MS);
-  }
-
-  protected dismissConfirmation(): void {
-    this.clearConfirmTimer();
-    this.confirmed.set(null);
+  /**
+   * Puts the moved card at the top of the screen and rings it briefly, then
+   * clears the search so the next person starts from a clean field.
+   */
+  private flag(key: string): void {
     this.search.set('');
+    this.highlighted.set(key);
+
+    scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' });
+
+    this.clearHighlight();
+    this.highlightTimer = setTimeout(() => {
+      this.highlighted.set(null);
+      this.highlightTimer = null;
+    }, HIGHLIGHT_MS);
   }
 
-  private clearConfirmTimer(): void {
-    if (this.confirmTimer !== null) {
-      clearTimeout(this.confirmTimer);
-      this.confirmTimer = null;
+  private clearHighlight(): void {
+    if (this.highlightTimer !== null) {
+      clearTimeout(this.highlightTimer);
+      this.highlightTimer = null;
     }
   }
 
@@ -237,7 +293,8 @@ export class Roster {
     }
 
     this.walkinOpen.set(false);
-    this.celebrate(name);
+    const added = this.store.extrasFor(course.id).at(-1);
+    this.flag(added ? `extra#${added.uid}` : '');
   }
 
   // -------------------------------------------------------------------------
@@ -278,4 +335,8 @@ function byCategoryThenRole(a: Group, b: Group): number {
   const byCategory = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
   if (byCategory !== 0) return byCategory;
   return a.role === b.role ? 0 : a.role === 'leader' ? -1 : 1;
+}
+
+function reducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
