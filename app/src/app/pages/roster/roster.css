@@ -283,9 +283,10 @@ main.waiting-screen {
 }
 
 /*
- * The only thing a card says beyond the name. Pinned under the tick box rather
- * than flowing after the name, so it lands in the same spot on every card it
- * appears on and a long name never pushes it around.
+ * The only thing a card says beyond the name, and it stays quiet about it: a
+ * faint marker under the name rather than a label competing with it. Out of
+ * flow so it lands in the same spot on every card it appears on, aligned with
+ * the name's own left edge.
  *
  * `.tagged` reserves the room: the badge is out of flow, so without the extra
  * height it would sit on top of a name that wrapped.
@@ -297,16 +298,16 @@ main.waiting-screen {
 
 .label small {
   position: absolute;
-  right: 0.9rem;
+  left: 1rem;
   bottom: 0.55rem;
   padding: 0.1rem 0.45rem;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.65;
+  opacity: 0.45;
 }
 
 /*
