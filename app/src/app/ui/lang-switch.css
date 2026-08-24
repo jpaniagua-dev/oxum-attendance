@@ -1,0 +1,48 @@
+.lang {
+  display: flex;
+  flex: none;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.lang button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.lang button:hover {
+  color: var(--text);
+}
+
+.lang button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* A hairline keeps the white band of either flag from dissolving on light. */
+.flag {
+  width: 22px;
+  height: 15px;
+  border-radius: 2px;
+  outline: 1px solid var(--hairline);
+  outline-offset: -1px;
+}
+
+.lang button:not([aria-pressed='true']) .flag {
+  opacity: 0.7;
+}

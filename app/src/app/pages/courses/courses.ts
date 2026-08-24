@@ -4,6 +4,7 @@ import { I18nService } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { longDate } from '../../core/format';
+import { LangSwitch } from '../../ui/lang-switch';
 import { Course } from '../../core/models';
 
 /**
@@ -15,7 +16,7 @@ import { Course } from '../../core/models';
  */
 @Component({
   selector: 'app-courses',
-  imports: [RouterLink],
+  imports: [RouterLink, LangSwitch],
   templateUrl: './courses.html',
   styleUrl: './courses.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

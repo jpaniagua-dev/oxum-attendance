@@ -16,12 +16,19 @@ import { I18nService, MessageKey } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { fold, longDate } from '../../core/format';
+import { LangSwitch } from '../../ui/lang-switch';
 import { Category, Group, Role, Student } from '../../core/models';
 
 const CATEGORY_ORDER: Category[] = ['active', 'trial', 'helper'];
 
 /** How long a freshly moved card stays highlighted. */
 const HIGHLIGHT_MS = 1800;
+
+/** Press-and-hold before a card opens its note instead of marking presence. */
+const LONG_PRESS_MS = 550;
+
+/** Past this much finger travel it is a scroll, not a hold. */
+const PRESS_SLOP = 10;
 
 interface WaitingGroup {
   group: Group;
@@ -54,7 +61,7 @@ interface Entry {
  */
 @Component({
   selector: 'app-roster',
-  imports: [RouterLink],
+  imports: [RouterLink, LangSwitch],
   templateUrl: './roster.html',
   styleUrl: './roster.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,6 +94,9 @@ export class Roster {
   protected readonly noteText = signal('');
 
   private highlightTimer: ReturnType<typeof setTimeout> | null = null;
+  private pressTimer: ReturnType<typeof setTimeout> | null = null;
+  private pressOrigin: { x: number; y: number } | null = null;
+  private longPressed = false;
 
   protected readonly course = this.store.course;
   protected readonly date = computed(() => longDate(this.store.date(), this.i18n.locale()));
@@ -157,7 +167,10 @@ export class Roster {
       }
     });
 
-    this.destroyRef.onDestroy(() => this.clearHighlight());
+    this.destroyRef.onDestroy(() => {
+      this.clearHighlight();
+      this.cancelPress();
+    });
   }
 
   private entryOf(courseId: string, group: Group, student: Student): Entry {
@@ -178,6 +191,7 @@ export class Roster {
 
   /** Marks a waiting student present: the card moves up to "Présents". */
   protected arrive(group: Group, student: Student): void {
+    if (this.consumeLongPress()) return;
     const course = this.course();
     if (!course || !course.hasSession) return;
 
@@ -190,6 +204,7 @@ export class Roster {
    * around, and a mis-tap must not quietly unmark someone standing right there.
    */
   protected tapPresent(item: Entry): void {
+    if (this.consumeLongPress()) return;
     if (!item.group || !item.student) return;
     this.untick.set({ group: item.group, student: item.student });
   }
@@ -229,6 +244,58 @@ export class Roster {
       clearTimeout(this.highlightTimer);
       this.highlightTimer = null;
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Long press
+  // -------------------------------------------------------------------------
+
+  /**
+   * Press and hold a name to reach its note.
+   *
+   * The note is a teacher's aside — "actually dances as a leader" — so it does
+   * not deserve a control on every card competing with the one thing students
+   * are asked to do. Holding is deliberate enough that nobody opens it by
+   * accident, and the hold is abandoned as soon as the finger travels, which is
+   * what scrolling a long list looks like.
+   */
+  protected onPressStart(event: PointerEvent, group: Group | null, student: Student | null): void {
+    this.cancelPress();
+    this.longPressed = false;
+    if (!group || !student || !group.commentColumn) return;
+
+    this.pressOrigin = { x: event.clientX, y: event.clientY };
+    this.pressTimer = setTimeout(() => {
+      this.pressTimer = null;
+      this.longPressed = true;
+      this.openNote(group, student);
+    }, LONG_PRESS_MS);
+  }
+
+  protected onPressMove(event: PointerEvent): void {
+    const origin = this.pressOrigin;
+    if (!origin) return;
+    const travelled = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
+    if (travelled > PRESS_SLOP) this.cancelPress();
+  }
+
+  protected onPressEnd(): void {
+    this.cancelPress();
+  }
+
+  private cancelPress(): void {
+    if (this.pressTimer !== null) {
+      clearTimeout(this.pressTimer);
+      this.pressTimer = null;
+    }
+    this.pressOrigin = null;
+  }
+
+  /** A hold is followed by a click; that click must not also mark the student. */
+  private consumeLongPress(): boolean {
+    if (!this.longPressed) return false;
+    this.longPressed = false;
+    return true;
   }
 
   // -------------------------------------------------------------------------

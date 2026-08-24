@@ -8,14 +8,7 @@
         <h1>{{ current.title }}</h1>
         <p class="note date">{{ date() }}</p>
       </div>
-      <div class="lang" role="group" [attr.aria-label]="t('lang.title')">
-        <button type="button" [attr.aria-pressed]="i18n.lang() === 'fr'" (click)="i18n.set('fr')">
-          FR
-        </button>
-        <button type="button" [attr.aria-pressed]="i18n.lang() === 'en'" (click)="i18n.set('en')">
-          EN
-        </button>
-      </div>
+      <app-lang-switch />
       <a class="icon-btn" routerLink="/reglages" [attr.aria-label]="t('common.settings')">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="3" />
@@ -99,37 +92,31 @@
         </div>
         <div class="grid">
           @for (item of present(); track item.key) {
-            <div class="name here" [class.just]="highlighted() === item.key">
+            <div
+              class="name here"
+              [class.just]="highlighted() === item.key"
+              [class.noted]="item.comment"
+            >
               <button
                 type="button"
                 class="pick"
                 [disabled]="!item.group"
                 (click)="tapPresent(item)"
+                (pointerdown)="onPressStart($event, item.group!, item.student!)"
+                (pointermove)="onPressMove($event)"
+                (pointerup)="onPressEnd()"
+                (pointercancel)="onPressEnd()"
+                (pointerleave)="onPressEnd()"
+                (contextmenu)="$event.preventDefault()"
               >
                 <span class="label">
                   {{ item.name }}
                   <small>{{ item.detail }}</small>
-                  @if (item.comment) {
-                    <em>{{ item.comment }}</em>
-                  }
                 </span>
                 <span class="box">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 </span>
               </button>
-              @if (item.group && item.student && item.group.commentColumn) {
-                <button
-                  type="button"
-                  class="note-btn"
-                  [class.filled]="item.comment"
-                  [attr.aria-label]="t('note.open')"
-                  (click)="openNote(item.group, item.student)"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" />
-                  </svg>
-                </button>
-              }
             </div>
           }
         </div>
@@ -147,36 +134,25 @@
             <div
               class="name"
               [class.just]="highlighted() === entry.group.key + '#' + student.row"
+              [class.noted]="commentOf(entry.group, student)"
             >
               <button
                 type="button"
                 class="pick"
                 [disabled]="!current.hasSession"
                 (click)="arrive(entry.group, student)"
+                (pointerdown)="onPressStart($event, entry.group, student)"
+                (pointermove)="onPressMove($event)"
+                (pointerup)="onPressEnd()"
+                (pointercancel)="onPressEnd()"
+                (pointerleave)="onPressEnd()"
+                (contextmenu)="$event.preventDefault()"
               >
-                <span class="label">
-                  {{ student.name }}
-                  @if (commentOf(entry.group, student); as note) {
-                    <em>{{ note }}</em>
-                  }
-                </span>
+                <span class="label">{{ student.name }}</span>
                 <span class="box">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 </span>
               </button>
-              @if (entry.group.commentColumn) {
-                <button
-                  type="button"
-                  class="note-btn"
-                  [class.filled]="commentOf(entry.group, student)"
-                  [attr.aria-label]="t('note.open')"
-                  (click)="openNote(entry.group, student)"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z" />
-                  </svg>
-                </button>
-              }
             </div>
           }
         </div>

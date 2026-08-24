@@ -43,6 +43,7 @@
    * white text at roughly 1.2:1, which is no text at all.
    */
   --press: rgba(0, 0, 0, 0.08);
+  --hairline: rgba(0, 0, 0, 0.18);
   --present: #17812f;
   --present-line: #17812f;
   --present-ink: #ffffff;
@@ -90,6 +91,7 @@
 
     /* Translucent over the near-black ground: reads as a deep forest green. */
     --press: rgba(255, 255, 255, 0.09);
+    --hairline: rgba(255, 255, 255, 0.24);
   --present: #1ffb4947;
     --present-line: #1ffb4970;
     --present-ink: #f6fff8;
@@ -105,6 +107,7 @@
 /* The in-app switch, which must win over the device in both directions. */
 :root[data-theme='dark'] {
   --press: rgba(255, 255, 255, 0.09);
+  --hairline: rgba(255, 255, 255, 0.24);
   --ink: #0e0d0c;
   --surface: #191614;
   --surface-hi: #221e1b;
@@ -155,8 +158,13 @@ body {
   font-size: var(--step-0);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  /* Passed from hand to hand: no long-press menus, no accidental selection. */
+  /*
+   * Passed from hand to hand: no accidental selection, and no iOS callout —
+   * pressing and holding a name is how a note is opened, so the browser must
+   * not answer that gesture with its own menu.
+   */
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -312,33 +320,6 @@ p {
 .field input::placeholder,
 .field textarea::placeholder {
   color: var(--faint);
-}
-
-/* Two letters: the smallest control that still reads as a choice. */
-.lang {
-  display: flex;
-  flex: none;
-  padding: 0.15rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-
-.lang button {
-  padding: 0.35rem 0.6rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-}
-
-.lang button[aria-pressed='true'] {
-  background: var(--accent);
-  color: var(--accent-ink);
 }
 
 .field small {

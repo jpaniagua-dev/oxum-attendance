@@ -1,14 +1,7 @@
 <header class="masthead">
   <p class="eyebrow rule">{{ t('common.studio') }}</p>
   <div class="tools">
-    <div class="lang" role="group" [attr.aria-label]="t('lang.title')">
-      <button type="button" [attr.aria-pressed]="i18n.lang() === 'fr'" (click)="i18n.set('fr')">
-        FR
-      </button>
-      <button type="button" [attr.aria-pressed]="i18n.lang() === 'en'" (click)="i18n.set('en')">
-        EN
-      </button>
-    </div>
+    <app-lang-switch />
     <a class="gear" routerLink="/reglages" [attr.aria-label]="t('common.settings')">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="12" r="3" />

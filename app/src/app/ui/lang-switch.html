@@ -1,0 +1,20 @@
+<div class="lang" role="group" [attr.aria-label]="t('lang.title')">
+  <button type="button" [attr.aria-pressed]="lang() === 'fr'" (click)="choose('fr')">
+    <svg class="flag" viewBox="0 0 3 2" aria-hidden="true">
+      <rect width="3" height="2" fill="#ED2939" />
+      <rect width="2" height="2" fill="#fff" />
+      <rect width="1" height="2" fill="#002654" />
+    </svg>
+    FR
+  </button>
+  <button type="button" [attr.aria-pressed]="lang() === 'en'" (click)="choose('en')">
+    <svg class="flag" viewBox="0 0 60 40" aria-hidden="true">
+      <rect width="60" height="40" fill="#012169" />
+      <path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8" />
+      <path d="M0 0 60 40M60 0 0 40" stroke="#C8102E" stroke-width="4" />
+      <path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="13" />
+      <path d="M30 0v40M0 20h60" stroke="#C8102E" stroke-width="8" />
+    </svg>
+    EN
+  </button>
+</div>

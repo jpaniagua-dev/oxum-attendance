@@ -79,7 +79,7 @@ const FR = {
   'note.open': 'Commentaire',
   'note.title': 'Commentaire sur {name}',
   'note.hint':
-    "Écrit dans la colonne Commentaires du classeur, à côté du nom. Visible par l'école.",
+    "Écrit dans la colonne Commentaires du classeur, à côté du nom. Visible par l'école. Vide le champ pour effacer la note.",
   'note.placeholder': 'danse en fait leader',
   'note.save': 'Enregistrer',
 
@@ -242,7 +242,7 @@ const EN: Record<MessageKey, string> = {
   'note.open': 'Note',
   'note.title': 'Note about {name}',
   'note.hint':
-    "Written into the workbook's Commentaires column, next to the name. Visible to the school.",
+    "Written into the workbook's Commentaires column, next to the name. Visible to the school. Empty the field to clear the note.",
   'note.placeholder': 'actually dances as a leader',
   'note.save': 'Save',
 

@@ -121,7 +121,8 @@ writing somewhere else.
 ```
 
 `kind: "trial"` writes a walk-in into a free row instead, name and tick together.
-`kind: "comment"` writes free text into the block's `Commentaires` column — `commentColumn`
+`kind: "comment"` — reached by pressing and holding a name — writes free text into the
+block's `Commentaires` column — `commentColumn`
 and `text` rather than `sessionColumn` and `present`. An empty string clears the cell,
 which is how a note is removed.
 
@@ -194,8 +195,8 @@ for the app, which also clears the deployment URL and token.
 The theme follows the device by default — a studio is bright in the afternoon and dim at
 night, and a phone already switches on its own. Settings can force light or dark instead.
 
-The interface language is French or English, switched from the two-letter control in the
-class header. It is deliberately outside the settings screen: students switch it
+The interface language is French or English, switched from the flag control in the class
+header. It is deliberately outside the settings screen: students switch it
 themselves. `app/src/app/core/i18n.ts` holds both dictionaries; French is the source of
 truth and the English record is typed against it, so a forgotten key fails the build
 rather than the class.

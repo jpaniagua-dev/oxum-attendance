@@ -22,15 +22,25 @@
   backdrop-filter: blur(12px);
 }
 
+/*
+ * Wraps rather than squeezes: with a full-size language control the row no
+ * longer fits beside a long class name on a phone, and a truncated class name
+ * is worse than a second line.
+ */
 .top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem 0.75rem;
 }
 
 .titles {
-  flex: 1;
+  flex: 1 1 11rem;
   min-width: 0;
+}
+
+app-lang-switch {
+  margin-left: auto;
 }
 
 .titles h1 {
@@ -224,6 +234,7 @@ main.waiting-screen {
  * two actions genuinely need separate targets.
  */
 .name {
+  position: relative;
   display: flex;
   align-items: stretch;
   border: 1px solid var(--line);
@@ -280,14 +291,24 @@ main.waiting-screen {
   opacity: 0.75;
 }
 
-/* The school's note, shown where it matters: beside the person it is about. */
-.label em {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
-  font-style: normal;
-  line-height: 1.35;
-  opacity: 0.85;
+/*
+ * A note is a teacher's aside, not something to read past forty names, so it
+ * shows only on a long press. This dot is the whole affordance — without it an
+ * existing note would be invisible and nobody would think to press and hold.
+ */
+.name.noted::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-text);
+}
+
+.name.here.noted::after {
+  background: var(--present-ink);
 }
 
 /* The tick box carries the state; colour alone never does. */
@@ -314,38 +335,6 @@ main.waiting-screen {
   stroke-dashoffset: 24;
 }
 
-.note-btn {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  border: 0;
-  border-left: 1px solid var(--line);
-  background: transparent;
-  color: var(--faint);
-  cursor: pointer;
-  transition: color 140ms ease, background-color 140ms ease;
-}
-
-.note-btn:hover {
-  color: var(--text);
-  background: var(--surface-hi);
-}
-
-.note-btn.filled {
-  color: var(--accent-text);
-}
-
-.note-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .name.here {
   background: var(--present);
   border-color: var(--present-line);
@@ -357,11 +346,7 @@ main.waiting-screen {
 }
 
 .name.here .pick:hover:not(:disabled),
-.name.here .note-btn:hover {
-  background: var(--press);
-}
-
-.name.here .box {
+.name.here .name.here .box {
   border-color: var(--present-ink);
 }
 
@@ -369,17 +354,7 @@ main.waiting-screen {
   animation: draw 220ms ease forwards;
 }
 
-.name.here .note-btn {
-  border-left-color: var(--present-ink);
-  color: var(--present-ink);
-  opacity: 0.75;
-}
-
-.name.here .note-btn.filled {
-  opacity: 1;
-}
-
-/*
+.name.here .name.here /*
  * The receipt for a tap, now that nothing interrupts the screen to give one:
  * the card that just moved holds a ring for a moment at the top of the page.
  */
