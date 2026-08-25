@@ -5,7 +5,7 @@
   "description": "Attendance kiosk for dance classes at Bachata Geneva Dance Studio",
   "type": "module",
   "scripts": {
-    "test": "node --test 'apps-script/test/*.test.mjs'",
+    "test": "node --test \"apps-script/test/*.test.mjs\"",
     "build": "npm --prefix app run build",
     "start": "npm --prefix app start"
   }

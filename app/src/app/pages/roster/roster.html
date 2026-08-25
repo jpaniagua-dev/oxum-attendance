@@ -97,7 +97,7 @@
               [class.here]="section.present"
               [class.just]="highlighted() === entry.key"
               [class.noted]="entry.noted"
-              [class.tagged]="entry.trial"
+              [class.tagged]="entry.trial || entry.announced"
             >
               <button
                 type="button"
@@ -113,8 +113,15 @@
               >
                 <span class="label">
                   {{ entry.name }}
-                  @if (entry.trial) {
-                    <small>{{ t('roster.trial') }}</small>
+                  @if (entry.trial || entry.announced) {
+                    <span class="tags">
+                      @if (entry.announced) {
+                        <small class="ann">{{ t('roster.announced') }}</small>
+                      }
+                      @if (entry.trial) {
+                        <small>{{ t('roster.trial') }}</small>
+                      }
+                    </span>
                   }
                 </span>
                 <span class="box">
@@ -139,14 +146,23 @@
       </div>
     }
 
-    <button
-      type="button"
-      class="btn btn-ghost walkin-trigger"
-      [disabled]="!current.hasSession"
-      (click)="openWalkin()"
-    >
-      {{ t('roster.walkin') }}
-    </button>
+    <div class="footer-actions">
+      <button
+        type="button"
+        class="btn btn-ghost"
+        [disabled]="!current.hasSession"
+        (click)="openWalkin()"
+      >
+        {{ t('roster.walkin') }}
+      </button>
+
+      <!-- Only when there is something to correct: no dead control in a class. -->
+      @if (current.hasSession && noShows().length) {
+        <button type="button" class="btn btn-ghost close-trigger" (click)="openClosure()">
+          {{ closeTriggerLabel() }}
+        </button>
+      }
+    </div>
   </main>
 
   @if (untick(); as pending) {
@@ -163,6 +179,58 @@
           </button>
         </div>
       </div>
+    </div>
+  }
+
+  @if (closing()) {
+    <div class="stage" role="alertdialog" aria-labelledby="close-title">
+      <form class="stage-inner" (submit)="confirmClosure($event)">
+        <h1 id="close-title">{{ t('close.title') }}</h1>
+        <p class="note">{{ t('close.body', { date: date() }) }}</p>
+
+        <ul class="no-shows">
+          @for (entry of noShows(); track entry.key) {
+            <li>
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="isPicked(entry.key)"
+                  (change)="togglePicked(entry.key)"
+                />
+                <span>{{ entry.name }}</span>
+              </label>
+            </li>
+          }
+        </ul>
+
+        @if (settings.hasPin()) {
+          <label class="field">
+            <span>{{ t('gate.code') }}</span>
+            <input
+              type="password"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="8"
+              enterkeyhint="done"
+              [value]="closePin()"
+              (input)="onClosePin($event)"
+            />
+          </label>
+        }
+
+        @if (closeError(); as error) {
+          <p class="field-error">{{ error }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="cancelClosure()">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" class="btn btn-danger" [disabled]="!closePicked().size">
+            {{ closeConfirmLabel() }}
+          </button>
+        </div>
+      </form>
     </div>
   }
 

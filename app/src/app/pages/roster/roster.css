@@ -296,10 +296,15 @@ main.waiting-screen {
   padding-bottom: 1.7rem;
 }
 
-.label small {
+.label .tags {
   position: absolute;
   left: 1rem;
   bottom: 0.55rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.label small {
   padding: 0.1rem 0.45rem;
   border: 1px solid currentColor;
   border-radius: 999px;
@@ -365,7 +370,7 @@ main.waiting-screen {
 }
 
 .name.here .pick:hover:not(:disabled),
-.name.here .name.here .box {
+.name.here .box {
   border-color: var(--present-ink);
 }
 
@@ -373,7 +378,7 @@ main.waiting-screen {
   animation: draw 220ms ease forwards;
 }
 
-.name.here .name.here /*
+/*
  * The receipt for a tap, now that nothing interrupts the screen to give one:
  * the card that just moved holds a ring for a moment at the top of the page.
  */
@@ -397,12 +402,66 @@ main.waiting-screen {
   }
 }
 
+/*
+ * Louder than the trial badge, and deliberately so: this one is a claim the
+ * teacher is being asked to check, not a note about who the student is.
+ */
+.label small.ann {
+  opacity: 0.9;
+  color: var(--accent-text);
+}
+
 .empty {
   padding: 1rem 0;
 }
 
-.walkin-trigger {
-  align-self: flex-start;
+.footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  align-items: center;
+}
+
+.close-trigger {
+  margin-left: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Closing a session
+   --------------------------------------------------------------------------- */
+
+/*
+ * A list of names with a box each, not a yes/no prompt. The teacher is the only
+ * thing that can catch a student ticked in from the other phone, and they can
+ * only catch it if they read the name and can leave it out.
+ */
+.no-shows {
+  max-height: 40vh;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.no-shows label {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 48px;
+  padding: 0 0.3rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.no-shows li:last-child label {
+  border-bottom: 0;
+}
+
+.no-shows input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--danger);
 }
 
 /* ---------------------------------------------------------------------------

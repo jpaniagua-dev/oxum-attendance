@@ -38,6 +38,12 @@ jobs:
         working-directory: app
         run: npm ci
 
+      # The announced/arrived split is the one thing here that can erase a
+      # record rather than fail to write one, so its tests gate the deploy.
+      - name: Test the app
+        working-directory: app
+        run: npx ng test --watch=false
+
       # base-href must match the repository name: Pages serves the site from
       # /<repo>/, and every asset URL is resolved against it.
       - name: Build

@@ -34,8 +34,9 @@ const PRESS_SLOP = 10;
 interface Entry {
   key: string;
   name: string;
-  /** The only thing a card says beyond the name, and only when true. */
+  /** The only things a card says beyond the name, and only when true. */
   trial: boolean;
+  announced: boolean;
   noted: boolean;
   arrival: number;
   category: Category;
@@ -102,6 +103,11 @@ export class Roster {
   protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
   protected readonly noteText = signal('');
 
+  protected readonly closing = signal(false);
+  protected readonly closePicked = signal<ReadonlySet<string>>(new Set<string>());
+  protected readonly closePin = signal('');
+  protected readonly closeError = signal<string | null>(null);
+
   private highlightTimer: ReturnType<typeof setTimeout> | null = null;
   private pressTimer: ReturnType<typeof setTimeout> | null = null;
   private pressOrigin: { x: number; y: number } | null = null;
@@ -146,6 +152,7 @@ export class Roster {
         key: `extra#${extra.uid}`,
         name: extra.name,
         trial: true,
+        announced: false,
         noted: false,
         arrival: this.store.arrivalOf(course.id, extra.groupKey, extra.row),
         category: 'trial',
@@ -171,6 +178,21 @@ export class Roster {
         entries: (buckets.get(key) ?? []).sort(present ? byArrival : byRosterOrder),
       }))
       .filter((section) => section.entries.length > 0);
+  });
+
+  /**
+   * The announced students nobody ticked, ignoring the search field: closing a
+   * session is about the whole class, not about what is on screen right now.
+   */
+  protected readonly noShows = computed(() => {
+    const course = this.course();
+    if (!course) return [];
+    return this.store.noShows(course).map(({ group, student }) => ({
+      key: `${group.key}#${student.row}`,
+      name: student.name,
+      group,
+      student,
+    }));
   });
 
   protected readonly nothingFound = computed(
@@ -200,6 +222,7 @@ export class Roster {
       key: `${group.key}#${student.row}`,
       name: student.name,
       trial: group.category === 'trial',
+      announced: this.store.isAnnounced(course.id, group, student),
       noted: !!this.store.commentOf(course.id, group, student),
       arrival: this.store.arrivalOf(course.id, group.key, student.row),
       category: group.category,
@@ -351,6 +374,66 @@ export class Roster {
   }
 
   // -------------------------------------------------------------------------
+  // Closing the session
+  // -------------------------------------------------------------------------
+
+  /**
+   * Opens the correction sheet, with every no-show ticked.
+   *
+   * They start ticked because that is the common case — the teacher glances at
+   * the names and confirms. What matters is that the names are *there*: this
+   * device cannot know that a colleague ticked somebody in on the other phone,
+   * so the only thing standing between that student and a false absence is a
+   * human reading their name. A yes/no dialog would not have given them one.
+   */
+  protected openClosure(): void {
+    this.closePicked.set(new Set(this.noShows().map((entry) => entry.key)));
+    this.closePin.set('');
+    this.closeError.set(null);
+    this.closing.set(true);
+  }
+
+  protected cancelClosure(): void {
+    this.closing.set(false);
+    this.closePin.set('');
+  }
+
+  protected togglePicked(key: string): void {
+    this.closePicked.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  }
+
+  protected isPicked(key: string): boolean {
+    return this.closePicked().has(key);
+  }
+
+  protected onClosePin(event: Event): void {
+    this.closePin.set((event.target as HTMLInputElement).value);
+    this.closeError.set(null);
+  }
+
+  protected confirmClosure(event: Event): void {
+    event.preventDefault();
+    const course = this.course();
+    if (!course) return;
+
+    // `matches` rather than `unlock`: the same four digits, but closing a
+    // session must not leave the settings screen open behind it.
+    if (this.settings.hasPin() && !this.settings.matches(this.closePin())) {
+      this.closeError.set(this.t('gate.wrong'));
+      return;
+    }
+
+    const chosen = this.noShows().filter((entry) => this.closePicked().has(entry.key));
+    if (chosen.length) this.store.closeSession(course, chosen);
+    this.closing.set(false);
+    this.closePin.set('');
+  }
+
+  // -------------------------------------------------------------------------
   // Search
   // -------------------------------------------------------------------------
 
@@ -417,6 +500,16 @@ export class Roster {
 
   protected presentWord(count: number): string {
     return this.t(count > 1 ? 'roster.hereMany' : 'roster.hereOne');
+  }
+
+  protected closeTriggerLabel(): string {
+    const n = this.noShows().length;
+    return this.t(n > 1 ? 'close.triggerMany' : 'close.triggerOne', { n });
+  }
+
+  protected closeConfirmLabel(): string {
+    const n = this.closePicked().size;
+    return this.t(n > 1 ? 'close.confirmMany' : 'close.confirmOne', { n });
   }
 
   protected syncLabel(): string {

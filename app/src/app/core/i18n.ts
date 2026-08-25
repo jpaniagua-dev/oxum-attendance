@@ -31,6 +31,8 @@ const FR = {
   'courses.loading': 'Chargement…',
   'courses.students': '{n} élèves',
   'courses.noSession': 'Pas de colonne pour cette date',
+  'courses.dateLabel': 'Séance du',
+  'courses.today': "Aujourd'hui",
   'courses.none':
     "Aucun cours visible aujourd'hui. Ajoute un classeur ou réaffiche un cours masqué depuis les réglages.",
   'courses.unreachable':
@@ -64,6 +66,14 @@ const FR = {
   'untick.title': '{name} est noté présent',
   'untick.body': 'Retirer cette présence ? Le classeur sera mis à jour tout de suite.',
   'untick.confirm': 'Retirer',
+
+  'close.title': 'Clôturer la séance',
+  'close.body':
+    "Ces élèves étaient déjà cochés dans le classeur avant le cours, et personne ne les a pointés ici. Décoche ceux qui sont finalement venus : un pointage fait sur l'autre téléphone ne se voit pas depuis celui-ci. Séance du {date}.",
+  'close.triggerOne': 'Clôturer — 1 annoncé non pointé',
+  'close.triggerMany': 'Clôturer — {n} annoncés non pointés',
+  'close.confirmOne': 'Marquer 1 absent',
+  'close.confirmMany': 'Marquer {n} absents',
 
   'walkin.title': "Cours d'essai",
   'walkin.hint': "Ton prénom et l'initiale de ton nom suffisent.",
@@ -154,6 +164,7 @@ const FR = {
     "« {name} » disparaîtra de l'app, sur tous les appareils. Le Google Sheet et son contenu ne sont pas touchés, et tu peux le rajouter avec son lien.",
 
   'roster.trial': 'Essai',
+  'roster.announced': 'Annoncé',
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',
@@ -187,6 +198,8 @@ const EN: Record<MessageKey, string> = {
   'courses.loading': 'Loading…',
   'courses.students': '{n} students',
   'courses.noSession': 'No column for this date',
+  'courses.dateLabel': 'Session of',
+  'courses.today': 'Today',
   'courses.none':
     'No class showing today. Add a workbook, or unhide a class from the settings.',
   'courses.unreachable':
@@ -220,6 +233,14 @@ const EN: Record<MessageKey, string> = {
   'untick.title': '{name} is marked here',
   'untick.body': 'Remove this attendance? The workbook will be updated straight away.',
   'untick.confirm': 'Remove',
+
+  'close.title': 'Close the session',
+  'close.body':
+    'These students were already ticked in the workbook before class, and nobody marked them in here. Untick anyone who did turn up: a tick made on the other phone cannot be seen from this one. Session of {date}.',
+  'close.triggerOne': 'Close — 1 announced, not marked in',
+  'close.triggerMany': 'Close — {n} announced, not marked in',
+  'close.confirmOne': 'Mark 1 absent',
+  'close.confirmMany': 'Mark {n} absent',
 
   'walkin.title': 'Trial class',
   'walkin.hint': 'Your first name and the initial of your surname are enough.',
@@ -309,6 +330,7 @@ const EN: Record<MessageKey, string> = {
     '“{name}” will disappear from the app, on every device. The Google Sheet and its contents are untouched, and you can add it back with its link.',
 
   'roster.trial': 'Trial',
+  'roster.announced': 'Announced',
 
   'role.leaders': 'Leaders',
   'role.followers': 'Followers',

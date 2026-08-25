@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService } from '../../core/i18n';
-import { SessionStore } from '../../core/session.store';
+import { SessionStore, todayIso } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { longDate } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
@@ -55,6 +55,28 @@ export class Courses {
   protected reload(): void {
     void this.store.load();
   }
+
+  /**
+   * Looks at another date's session.
+   *
+   * A class is rarely closed on the spot, so the previous evening has to be
+   * reachable. Nothing else changes: the workbook is read for that date, and a
+   * date the app never saw being taught yields no announcements at all, so it
+   * cannot be closed by mistake — see `captureAnnounced`.
+   */
+  protected onDate(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    this.store.date.set(value);
+    void this.store.load();
+  }
+
+  protected today(): void {
+    this.store.date.set(todayIso());
+    void this.store.load();
+  }
+
+  protected readonly isToday = computed(() => this.store.date() === todayIso());
 
   protected countOf(course: Course): number {
     return course.groups.reduce((total, group) => total + group.students.length, 0);

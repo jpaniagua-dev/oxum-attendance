@@ -15,6 +15,18 @@
   <h1>{{ t('courses.title') }}</h1>
   <p class="note date">{{ date() }}</p>
 
+  <div class="date-picker">
+    <label>
+      <span class="eyebrow">{{ t('courses.dateLabel') }}</span>
+      <input type="date" [value]="store.date()" (change)="onDate($event)" />
+    </label>
+    @if (!isToday()) {
+      <button type="button" class="btn btn-ghost" (click)="today()">
+        {{ t('courses.today') }}
+      </button>
+    }
+  </div>
+
   @if (store.loading()) {
     <p class="note">{{ t('courses.loading') }}</p>
   }

@@ -74,6 +74,34 @@ main {
   text-transform: capitalize;
 }
 
+/*
+ * A class is rarely closed on the spot, so the previous evening has to be
+ * reachable — otherwise the correction can only ever be made during the class
+ * it corrects.
+ */
+.date-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gap);
+  margin-top: 0.4rem;
+}
+
+.date-picker label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.date-picker input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
 .actions.start {
   justify-content: flex-start;
 }

@@ -60,8 +60,19 @@ export class SettingsService {
     if (patch.pin) this.unlockedNow.set(true);
   }
 
+  /**
+   * Checks the code without granting anything.
+   *
+   * Closing a session asks for the same four digits, but it must not hand out
+   * the settings screen as a side effect: the two are guarded by one code, not
+   * joined into one permission.
+   */
+  matches(candidate: string): boolean {
+    return candidate === this.stored().pin;
+  }
+
   unlock(candidate: string): boolean {
-    if (candidate === this.stored().pin) {
+    if (this.matches(candidate)) {
       this.unlockedNow.set(true);
       return true;
     }

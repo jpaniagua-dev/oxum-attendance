@@ -52,6 +52,17 @@ export class SessionStore {
   private readonly extras = signal<Extra[]>([]);
 
   /**
+   * Rows the workbook already had ticked when this date was first opened.
+   *
+   * The school ticks a name in advance when a student says they will come, so a
+   * TRUE in the sheet means "announced" every bit as often as it means
+   * "arrived". Nothing in the grid separates the two, and only the first load of
+   * the day can: from the second one on, every tick made in the app is in the
+   * sheet too and looks exactly the same.
+   */
+  private readonly announced = signal<Record<string, true>>({});
+
+  /**
    * Arrival order within this session, so the person who just tapped sits at
    * the top of the present list. It is the only feedback they get that the tap
    * landed, now that nothing interrupts the screen to tell them.
@@ -137,6 +148,7 @@ export class SessionStore {
     this.extras.set(readJson(extrasKey(payload.date), [] as Extra[]));
     this.order.set(readJson(orderKey(payload.date), {}));
     this.notes.set(readJson(notesKey(payload.date), {}));
+    this.announced.set(captureAnnounced(payload));
 
     const current = this.courseId();
     if (current && !payload.courses.some((course) => course.id === current)) {
@@ -153,8 +165,36 @@ export class SessionStore {
   // -------------------------------------------------------------------------
 
   isPresent(courseId: string, group: Group, student: Student): boolean {
-    const override = this.overrides()[overrideKey(courseId, group.key, student.row)];
-    return override ?? student.present === true;
+    const key = overrideKey(courseId, group.key, student.row);
+    const override = this.overrides()[key];
+    if (override !== undefined) return override;
+    // A tick that was already there says the student announced themselves, not
+    // that they walked in. Somebody still has to tap the name for that.
+    if (this.announced()[key]) return false;
+    return student.present === true;
+  }
+
+  /** Announced in the workbook, and nobody has confirmed or denied it here. */
+  isAnnounced(courseId: string, group: Group, student: Student): boolean {
+    const key = overrideKey(courseId, group.key, student.row);
+    return this.announced()[key] === true && this.overrides()[key] === undefined;
+  }
+
+  /**
+   * The announced students nobody ticked: the whole point of closing a session.
+   *
+   * Blocks with no column for this date are skipped — there is nothing to write
+   * there, and `mark` would refuse anyway.
+   */
+  noShows(course: Course): { group: Group; student: Student }[] {
+    const found: { group: Group; student: Student }[] = [];
+    for (const group of course.groups) {
+      if (group.sessionColumn === null) continue;
+      for (const student of group.students) {
+        if (this.isAnnounced(course.id, group, student)) found.push({ group, student });
+      }
+    }
+    return found;
   }
 
   /** Higher means more recent; 0 for anyone already ticked when the app opened. */
@@ -296,6 +336,26 @@ export class SessionStore {
     return { ok: true };
   }
 
+  /**
+   * Writes FALSE for the announced students the teacher confirms never came.
+   *
+   * This is a correction, not a submission: everything anybody tapped is in the
+   * workbook already, so forgetting to close a session loses these corrections
+   * and nothing else. That is what keeps the promise of the per-tap design —
+   * nothing depends on somebody pressing a final button.
+   *
+   * It only ever touches cells this device sees as announced-and-unconfirmed,
+   * so a colleague's tick on the other phone cannot be turned into an absence:
+   * their tick is not an announcement here. What it can do is offer to mark
+   * somebody absent who was confirmed elsewhere — which is why the caller shows
+   * the names and has them ticked off one by one rather than asking yes or no.
+   */
+  closeSession(course: Course, targets: { group: Group; student: Student }[]): void {
+    for (const target of targets) {
+      this.mark(course, target.group, target.student, false);
+    }
+  }
+
   dismissConflicts(): void {
     this.conflicts.set([]);
   }
@@ -331,6 +391,7 @@ export class SessionStore {
 
     const batch = this.queue();
     this.syncing.set(true);
+    let delivered = false;
     try {
       const results = await this.api.run(batch);
       const failed: Operation[] = [];
@@ -372,11 +433,19 @@ export class SessionStore {
         this.conflicts.update((current) => [...current, ...conflicts]);
         await this.load();
       }
+      delivered = true;
     } catch {
       // Network or endpoint failure: keep everything and try again later.
     } finally {
       this.syncing.set(false);
     }
+
+    // Whatever was enqueued while this batch was in flight met the guard above
+    // and went nowhere. Send it now rather than leaving it for the retry tick:
+    // closing a session enqueues several corrections at once, and they should
+    // land together instead of trickling out over the next minute. Guarded on a
+    // delivered batch, so a dead network still backs off to the timer.
+    if (delivered && this.queue().length) void this.flush();
   }
 
   private rollback(op: Operation): void {
@@ -428,6 +497,40 @@ export class SessionStore {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Works out who was announced, once per date, and remembers it.
+ *
+ * Two rules, and the second one is the load-bearing one:
+ *
+ * - The answer is computed on the first load of a date and read back ever
+ *   after. Recomputing it would turn every tick made since — including the ones
+ *   made from the other teacher's phone — into an announcement, and offer to
+ *   erase them.
+ * - A date opened for the first time when it is no longer today yields nothing.
+ *   Its ticks are the record of a class that already happened; reading them as
+ *   announcements would propose marking the entire class absent. A date that
+ *   *was* opened while it was being taught keeps its stored answer, so closing
+ *   it the next morning still works.
+ */
+function captureAnnounced(payload: SessionPayload): Record<string, true> {
+  const stored = readJson<Record<string, true> | null>(announcedKey(payload.date), null);
+  if (stored) return stored;
+  if (payload.date !== todayIso()) return {};
+
+  const rows: Record<string, true> = {};
+  for (const course of payload.courses) {
+    for (const group of course.groups) {
+      for (const student of group.students) {
+        if (student.present === true) {
+          rows[overrideKey(course.id, group.key, student.row)] = true;
+        }
+      }
+    }
+  }
+  writeJson(announcedKey(payload.date), rows);
+  return rows;
+}
 
 /**
  * Identifies the one cell an operation writes to. A tick and a note on the same
@@ -483,6 +586,10 @@ function orderKey(date: string): string {
 
 function notesKey(date: string): string {
   return `attendance.notes.${date}`;
+}
+
+function announcedKey(date: string): string {
+  return `attendance.announced.${date}`;
 }
 
 function uid(): string {
