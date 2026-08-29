@@ -14,20 +14,14 @@
   background: var(--masthead);
 }
 
-/* The one flourish: a hairline of the brand amber leading the eyebrow. */
-.rule {
-  position: relative;
-  padding-left: 1.75rem;
-}
-
-.rule::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1.15rem;
-  height: 2px;
-  background: var(--accent);
+/* See the note on `.mark` in the class list's stylesheet. */
+.mark {
+  align-self: center;
+  width: min(16rem, 72%);
+  height: auto;
+  padding: 1rem 1.3rem;
+  border-radius: var(--radius);
+  background: var(--mark-plate);
 }
 
 main {

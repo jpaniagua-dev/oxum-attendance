@@ -66,6 +66,9 @@
 
   --masthead: #ffffff;
 
+  /* The wordmark is drawn with a white glow, for the studio's photographs. */
+  --mark-plate: #16151c;
+
   --step-0: 1rem;
   --step-1: 1.125rem;
   --step-2: 1.375rem;
@@ -125,6 +128,9 @@
     --scrim-solid: rgba(11, 10, 16, 0.97);
 
     --masthead: #16151c;
+
+    /* Already on the ground the mark was made for. */
+    --mark-plate: transparent;
   }
 }
 
@@ -164,6 +170,7 @@
   --scrim-solid: rgba(11, 10, 16, 0.97);
 
   --masthead: #16151c;
+  --mark-plate: transparent;
 }
 
 *,

@@ -22,20 +22,19 @@ main > * {
 }
 
 
-/* The one flourish: a hairline of the brand amber leading the eyebrow. */
-.rule {
-  position: relative;
-  padding-left: 1.75rem;
-}
-
-.rule::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 1.15rem;
-  height: 2px;
-  background: var(--accent);
+/*
+ * The wordmark carries a white glow, which is how it is drawn to sit on the
+ * studio's photographs. On the light theme that glow lands on near-white and
+ * the silver script thins out, so it gets a dark plate of its own — the same
+ * ground the mark was made for, in the shape the rest of the app uses.
+ */
+.mark {
+  flex: none;
+  width: auto;
+  height: 46px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--mark-plate);
 }
 
 .tools {

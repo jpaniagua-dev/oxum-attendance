@@ -1,9 +1,16 @@
 <header class="masthead">
-  <p class="eyebrow rule">{{ t('common.studio') }}</p>
   <app-lang-switch />
 </header>
 
 <main>
+  <img
+    class="mark"
+    src="logo.webp"
+    [attr.alt]="t('common.studio')"
+    width="960"
+    height="580"
+  />
+
   <div class="lede">
     <h1>{{ t('welcome.title') }}</h1>
     <p class="note">{{ t('welcome.body') }}</p>

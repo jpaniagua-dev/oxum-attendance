@@ -238,3 +238,15 @@ not need either.
 The tests load `Code.gs` into a `vm` context with Apps Script stubs and run it against
 grids rebuilt to match the real workbooks — **with invented names**. The school's actual
 roster never enters this repo, and neither does the demo data.
+
+## The wordmark
+
+`app/public/logo.webp` is the school's own wordmark, taken from
+`bachatagenevastudio.com`. It belongs to Bachata Geneva Dance Studio, not to this
+repository, and it is here because this app is theirs: it appears on the start
+screen and in the class list header, never on the roster a student holds.
+
+The mark is drawn with a white glow, for the studio's photographs. On the light
+theme that glow lands on near-white and the silver script thins to a ghost, so
+it is given a dark plate of its own — `--mark-plate`, which is transparent in
+the dark theme where the ground is already the one the mark was made for.
