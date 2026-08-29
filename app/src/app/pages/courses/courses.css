@@ -7,7 +7,7 @@
 .masthead {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 1rem;
   padding: calc(1.1rem + env(safe-area-inset-top)) var(--gutter) 1rem;
   border-bottom: 1px solid var(--line);
