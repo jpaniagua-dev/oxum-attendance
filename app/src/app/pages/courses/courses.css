@@ -93,13 +93,15 @@ main {
   gap: 0.3rem;
 }
 
-.date-picker input {
+.date-picker select {
+  max-width: 100%;
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--line);
   border-radius: 11px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
+  text-transform: capitalize;
 }
 
 .actions.start {

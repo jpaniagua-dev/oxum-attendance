@@ -31,6 +31,17 @@ export class Courses {
   protected readonly date = computed(() => longDate(this.store.date(), this.i18n.locale()));
   protected readonly courses = this.store.visibleCourses;
 
+  /**
+   * The dates on offer, as the workbook names them.
+   *
+   * A calendar would let anyone pick a day the grid has no column for, which
+   * the app can only answer with "no column for this date". The school opens
+   * the season's dates in the sheet, so the sheet is the list.
+   */
+  protected readonly dateOptions = computed(() =>
+    this.store.sessionDates().map((iso) => ({ iso, label: longDate(iso, this.i18n.locale()) })),
+  );
+
   /** Workbooks that answered with an error, surfaced instead of swallowed. */
   protected readonly unreachable = computed(() =>
     this.store.courses().filter((course) => course.unreachable),
@@ -65,7 +76,7 @@ export class Courses {
    * cannot be closed by mistake — see `captureAnnounced`.
    */
   protected onDate(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+    const value = (event.target as HTMLSelectElement).value;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
     this.store.date.set(value);
     void this.store.load();

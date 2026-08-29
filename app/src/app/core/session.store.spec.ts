@@ -3,7 +3,16 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ApiService } from './api.service';
 import { SessionStore, todayIso } from './session.store';
-import { Course, Group, Operation, OperationResult, SessionPayload, Student } from './models';
+import { isoFromSessionKey } from './format';
+import {
+  Course,
+  Group,
+  Operation,
+  OperationResult,
+  SessionColumn,
+  SessionPayload,
+  Student,
+} from './models';
 
 /**
  * The announced/arrived split, which is the one piece of this app that can
@@ -18,22 +27,32 @@ function student(row: number, name: string, present: boolean | null): Student {
   return { row, number: row, name, present, comment: '' };
 }
 
-function group(students: Student[]): Group {
+const DEFAULT_COLUMNS: SessionColumn[] = [{ column: 5, key: '08-25', label: '25.08' }];
+
+function group(
+  students: Student[],
+  columns: SessionColumn[] = DEFAULT_COLUMNS,
+  key = 'leader:active',
+): Group {
   return {
-    key: 'leader:active',
+    key,
     label: 'Leaders actifs',
     role: 'leader',
     category: 'active',
     nameColumn: 2,
     sessionColumn: 5,
     commentColumn: 9,
-    sessionColumns: [{ column: 5, key: '08-25', label: '25.08' }],
+    sessionColumns: columns,
     students,
     freeSlots: [],
   };
 }
 
-function course(students: Student[]): Course {
+/** One block per column set, so a date shared by two halves can be checked. */
+function course(students: Student[], columnSets?: SessionColumn[][]): Course {
+  const groups = columnSets
+    ? columnSets.map((columns, index) => group(index ? [] : students, columns, `block:${index}`))
+    : [group(students)];
   return {
     id: 'book::Feuille 1::3',
     spreadsheetId: 'book',
@@ -43,12 +62,16 @@ function course(students: Student[]): Course {
     hidden: false,
     hasSession: true,
     sessionLabels: ['25.08'],
-    groups: [group(students)],
+    groups,
   };
 }
 
-function payload(date: string, students: Student[]): SessionPayload {
-  return { date, dateKey: date.slice(5), courses: [course(students)] };
+function payload(
+  date: string,
+  students: Student[],
+  columnSets?: SessionColumn[][],
+): SessionPayload {
+  return { date, dateKey: date.slice(5), courses: [course(students, columnSets)] };
 }
 
 /** Records what the backend would have been asked to write. */
@@ -185,5 +208,58 @@ describe('SessionStore — announced versus arrived', () => {
 
     expect(api.sent).toEqual([]);
     expect(store.isAnnounced(only().id, first(), first().students[0])).toBe(true);
+  });
+});
+
+/**
+ * The date list, which replaced a calendar: only a date the grid names can be
+ * written to, so only those are offered.
+ */
+describe('SessionStore — the dates on offer', () => {
+  let api: FakeApi;
+  let store: SessionStore;
+
+  beforeEach(() => {
+    localStorage.clear();
+    api = new FakeApi();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiService, useValue: api }] });
+    store = TestBed.inject(SessionStore);
+  });
+
+  it('lists the workbook columns in date order, and the date on screen with them', async () => {
+    api.next = payload(todayIso(), [student(10, 'Marie', false)], [
+      [
+        { column: 6, key: '09-08', label: '08.09' },
+        { column: 5, key: '09-01', label: '01.09' },
+      ],
+    ]);
+    await store.load();
+
+    const expected = [
+      ...new Set([isoFromSessionKey('09-01'), isoFromSessionKey('09-08'), todayIso()]),
+    ].sort();
+    expect(store.sessionDates()).toEqual(expected);
+  });
+
+  it('names a date once, however many blocks carry its column', async () => {
+    api.next = payload(todayIso(), [student(10, 'Marie', false)], [
+      [{ column: 5, key: '09-01', label: '01.09' }],
+      [{ column: 12, key: '09-01', label: '01.09' }],
+    ]);
+    await store.load();
+
+    expect(store.sessionDates().filter((iso) => iso === isoFromSessionKey('09-01'))).toHaveLength(
+      1,
+    );
+  });
+
+  /** A header the parser could not date is no use as a destination. */
+  it('drops a column whose header names no day', async () => {
+    api.next = payload(todayIso(), [student(10, 'Marie', false)], [
+      [{ column: 5, key: '02-30', label: 'rattrapage' }],
+    ]);
+    await store.load();
+
+    expect(store.sessionDates()).toEqual([todayIso()]);
   });
 });

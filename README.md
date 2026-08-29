@@ -74,7 +74,10 @@ Traps the code handles explicitly:
 - **Block height is not constant** (usually 7 rows, 9 seen in the wild). Reading stops
   when the `N°` column stops holding a number.
 - **Date headers are sometimes real dates, sometimes typed text.** Both collapse to an
-  `MM-DD` key; the year is ignored, since a season runs August to June.
+  `MM-DD` key; the year is ignored, since a season runs August to June. The app puts a
+  year back on for its own per-date storage, by the same rule: August onwards opens the
+  season, January to July closes it. Its date list holds these columns and nothing else,
+  so a day the grid does not name cannot be picked in the first place.
 
 ## API
 
@@ -102,6 +105,7 @@ A class carries the addresses the app needs to write back:
   "groups": [{
     "key": "leader:active",
     "nameColumn": 3, "sessionColumn": 4,
+    "sessionColumns": [{ "column": 4, "key": "08-25", "label": "25.08" }],
     "students": [{ "row": 12, "number": 1, "name": "…", "present": false }],
     "freeSlots": [{ "row": 15, "number": 4 }]
   }]

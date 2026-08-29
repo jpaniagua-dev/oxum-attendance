@@ -1,4 +1,4 @@
-import { Course, Group, Role, SessionPayload, Student, Workbook } from './models';
+import { Course, Group, Role, SessionColumn, SessionPayload, Student, Workbook } from './models';
 
 /**
  * A stand-in studio, used when the deployment URL is the word `demo`.
@@ -10,6 +10,20 @@ import { Course, Group, Role, SessionPayload, Student, Workbook } from './models
  * enrolled leaders at all, and trial blocks fuller than the roster.
  */
 export const DEMO_ENDPOINT = 'demo';
+
+/**
+ * The season the demo pretends to have, so the date list has something to show.
+ * A real workbook opens its dates ahead of time; an empty list would make the
+ * control look broken rather than empty.
+ */
+const DEMO_SESSIONS: SessionColumn[] = [
+  { column: 5, key: '08-25', label: '25.08' },
+  { column: 6, key: '09-01', label: '1.09' },
+  { column: 7, key: '09-08', label: '8.09' },
+  { column: 8, key: '09-15', label: '15.09' },
+  { column: 9, key: '09-22', label: '22.09' },
+  { column: 10, key: '09-29', label: '29.09' },
+];
 
 export function demoSession(date: string): SessionPayload {
   return {
@@ -116,7 +130,7 @@ function course(spec: DemoCourse): Course {
         nameColumn: role === 'leader' ? 3 : 13,
         sessionColumn: role === 'leader' ? 4 : 14,
         commentColumn: role === 'leader' ? 10 : 20,
-        sessionColumns: [],
+        sessionColumns: DEMO_SESSIONS,
         students,
         freeSlots: free,
       });
@@ -133,7 +147,7 @@ function course(spec: DemoCourse): Course {
     workbookLabel: spec.workbook,
     hidden: false,
     hasSession: true,
-    sessionLabels: ['25.08', '1.09', '8.09', '15.09', '22.09', '29.09'],
+    sessionLabels: DEMO_SESSIONS.map((session) => session.label),
     groups,
   };
 }

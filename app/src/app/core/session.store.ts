@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { I18nService } from './i18n';
+import { isoFromSessionKey, isoOf } from './format';
 import { Course, Group, Operation, Role, SessionPayload, Student } from './models';
 
 /** A walk-in added on this device but not yet confirmed by the sheet. */
@@ -78,6 +79,33 @@ export class SessionStore {
   readonly visibleCourses = computed(() =>
     this.courses().filter((course) => !course.hidden && !course.unreachable),
   );
+
+  /**
+   * Every session the loaded workbooks hold a column for, oldest first.
+   *
+   * The dates are not ours to invent: the school writes them across the top of
+   * each block, and one the grid does not name is one the app refuses to write
+   * to anyway. Listing them is both quicker to use than a calendar and honest
+   * about what can actually be opened.
+   *
+   * The columns are keyed by month and day alone, so the year is inferred — see
+   * `isoFromSessionKey`. The selected date is always in the list, even when no
+   * workbook names it, so the control can show what it is currently on.
+   */
+  readonly sessionDates = computed<string[]>(() => {
+    const found = new Set<string>();
+    for (const course of this.visibleCourses()) {
+      for (const group of course.groups) {
+        for (const column of group.sessionColumns) {
+          const iso = isoFromSessionKey(column.key);
+          if (iso) found.add(iso);
+        }
+      }
+    }
+    found.add(this.date());
+    // ISO dates sort chronologically as plain strings.
+    return [...found].sort();
+  });
 
   readonly course = computed(() => {
     const id = this.courseId();
@@ -597,9 +625,7 @@ function uid(): string {
 }
 
 export function todayIso(): string {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return isoOf(new Date());
 }
 
 export function messageOf(error: unknown): string {

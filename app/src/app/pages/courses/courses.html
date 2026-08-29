@@ -18,7 +18,13 @@
   <div class="date-picker">
     <label>
       <span class="eyebrow">{{ t('courses.dateLabel') }}</span>
-      <input type="date" [value]="store.date()" (change)="onDate($event)" />
+      <select (change)="onDate($event)">
+        @for (option of dateOptions(); track option.iso) {
+          <option [value]="option.iso" [selected]="option.iso === store.date()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
     </label>
     @if (!isToday()) {
       <button type="button" class="btn btn-ghost" (click)="today()">
