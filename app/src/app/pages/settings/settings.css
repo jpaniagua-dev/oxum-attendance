@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: calc(1rem + env(safe-area-inset-top)) var(--edge) 1rem;
+  padding: calc(1rem + env(safe-area-inset-top)) var(--gutter) 1rem;
   border-bottom: 1px solid var(--line);
   background: var(--masthead);
 }
@@ -18,11 +18,10 @@
   font-size: var(--step-2);
 }
 
-/* One measure across the app: see the note in the roster's stylesheet. */
-.masthead > *,
+/* Held to the same measure as every other screen: see `--gutter`. */
 main > * {
   width: 100%;
-  max-width: 62rem;
+  max-width: var(--measure);
   margin-inline: auto;
 }
 

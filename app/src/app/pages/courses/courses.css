@@ -7,18 +7,17 @@
 .masthead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
-  padding: calc(1.1rem + env(safe-area-inset-top)) var(--edge) 1rem;
+  padding: calc(1.1rem + env(safe-area-inset-top)) var(--gutter) 1rem;
   border-bottom: 1px solid var(--line);
   background: var(--masthead);
 }
 
-/* One measure across the app: see the note in the roster's stylesheet. */
-.masthead > *,
+/* Held to the same measure as every other screen: see `--gutter`. */
 main > * {
   width: 100%;
-  max-width: 62rem;
+  max-width: var(--measure);
   margin-inline: auto;
 }
 

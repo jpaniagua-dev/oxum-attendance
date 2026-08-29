@@ -16,21 +16,16 @@
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  padding: calc(0.9rem + env(safe-area-inset-top)) var(--edge) 0.9rem;
+  padding: calc(0.9rem + env(safe-area-inset-top)) var(--gutter) 0.9rem;
   border-bottom: 1px solid var(--line);
   background: var(--scrim);
   backdrop-filter: blur(12px);
 }
 
-/*
- * Phone first, but the app is also read on a laptop while a workbook is open
- * beside it. Past a comfortable measure the two columns stop being two columns
- * and become two distant lists, so the whole screen keeps one width.
- */
-.masthead > *,
+/* The masthead holds the measure with its own gutter; main holds it here. */
 main > * {
   width: 100%;
-  max-width: 62rem;
+  max-width: var(--measure);
   margin-inline: auto;
 }
 

@@ -75,6 +75,15 @@
   --radius: 14px;
   --edge: max(1rem, env(safe-area-inset-left));
 
+  /*
+   * The app is phone first, but it is also read on a laptop with a workbook
+   * open beside it. Past a comfortable measure the roster's two columns stop
+   * being two columns and become two distant lists, so every screen holds the
+   * same width — as a gutter, so a header stays one flex row.
+   */
+  --measure: 62rem;
+  --gutter: max(var(--edge), calc((100% - var(--measure)) / 2));
+
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --display: 'Outfit', 'Inter', system-ui, sans-serif;
 }
