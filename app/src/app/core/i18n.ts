@@ -31,12 +31,19 @@ const FR = {
   'courses.loading': 'Chargement…',
   'courses.students': '{n} élèves',
   'courses.noSession': 'Pas de colonne pour cette date',
-  'courses.dateLabel': 'Séance du',
-  'courses.today': "Aujourd'hui",
   'courses.none':
     "Aucun cours visible aujourd'hui. Ajoute un classeur ou réaffiche un cours masqué depuis les réglages.",
   'courses.unreachable':
     "Classeur « {name} » inaccessible. Vérifie qu'il est toujours partagé avec le compte Google qui a déployé le script.",
+
+  'session.dateLabel': 'Séance du',
+  'session.today': "Aujourd'hui",
+
+  'teacher.open': 'Réglages de la séance',
+  'teacher.close': 'Terminer la classe',
+  'teacher.pendingOne': '1 annoncé non pointé',
+  'teacher.pendingMany': '{n} annoncés non pointés',
+  'teacher.nothingToClose': 'Rien à corriger pour cette séance.',
 
   'roster.changeCourse': 'Changer de cours',
   'roster.search': 'Cherche ton nom…',
@@ -67,11 +74,9 @@ const FR = {
   'untick.body': 'Retirer cette présence ? Le classeur sera mis à jour tout de suite.',
   'untick.confirm': 'Retirer',
 
-  'close.title': 'Clôturer la séance',
+  'close.title': 'Terminer la classe',
   'close.body':
     "Ces élèves étaient déjà cochés dans le classeur avant le cours, et personne ne les a pointés ici. Décoche ceux qui sont finalement venus : un pointage fait sur l'autre téléphone ne se voit pas depuis celui-ci. Séance du {date}.",
-  'close.triggerOne': 'Clôturer — 1 annoncé non pointé',
-  'close.triggerMany': 'Clôturer — {n} annoncés non pointés',
   'close.confirmOne': 'Marquer 1 absent',
   'close.confirmMany': 'Marquer {n} absents',
 
@@ -198,12 +203,19 @@ const EN: Record<MessageKey, string> = {
   'courses.loading': 'Loading…',
   'courses.students': '{n} students',
   'courses.noSession': 'No column for this date',
-  'courses.dateLabel': 'Session of',
-  'courses.today': 'Today',
   'courses.none':
     'No class showing today. Add a workbook, or unhide a class from the settings.',
   'courses.unreachable':
     'Workbook “{name}” cannot be opened. Check it is still shared with the Google account that deployed the script.',
+
+  'session.dateLabel': 'Session of',
+  'session.today': 'Today',
+
+  'teacher.open': 'Session controls',
+  'teacher.close': 'End the class',
+  'teacher.pendingOne': '1 announced, not marked in',
+  'teacher.pendingMany': '{n} announced, not marked in',
+  'teacher.nothingToClose': 'Nothing to correct for this session.',
 
   'roster.changeCourse': 'Change class',
   'roster.search': 'Find your name…',
@@ -234,11 +246,9 @@ const EN: Record<MessageKey, string> = {
   'untick.body': 'Remove this attendance? The workbook will be updated straight away.',
   'untick.confirm': 'Remove',
 
-  'close.title': 'Close the session',
+  'close.title': 'End the class',
   'close.body':
     'These students were already ticked in the workbook before class, and nobody marked them in here. Untick anyone who did turn up: a tick made on the other phone cannot be seen from this one. Session of {date}.',
-  'close.triggerOne': 'Close — 1 announced, not marked in',
-  'close.triggerMany': 'Close — {n} announced, not marked in',
   'close.confirmOne': 'Mark 1 absent',
   'close.confirmMany': 'Mark {n} absent',
 

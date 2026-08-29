@@ -15,23 +15,17 @@
   <h1>{{ t('courses.title') }}</h1>
   <p class="note date">{{ date() }}</p>
 
-  <div class="date-picker">
-    <label>
-      <span class="eyebrow">{{ t('courses.dateLabel') }}</span>
-      <select (change)="onDate($event)">
-        @for (option of dateOptions(); track option.iso) {
-          <option [value]="option.iso" [selected]="option.iso === store.date()">
-            {{ option.label }}
-          </option>
-        }
-      </select>
-    </label>
-    @if (!isToday()) {
+  <!--
+    The date is chosen inside the class, where the correction happens. All that
+    is left here is the way back, for a list still showing another evening.
+  -->
+  @if (!isToday()) {
+    <div class="date-picker">
       <button type="button" class="btn btn-ghost" (click)="today()">
-        {{ t('courses.today') }}
+        {{ t('session.today') }}
       </button>
-    }
-  </div>
+    </div>
+  }
 
   @if (store.loading()) {
     <p class="note">{{ t('courses.loading') }}</p>

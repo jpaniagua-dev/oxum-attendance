@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,7 +14,7 @@ import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { I18nService } from '../../core/i18n';
-import { SessionStore } from '../../core/session.store';
+import { SessionStore, todayIso } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { fold, longDate } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
@@ -102,6 +103,14 @@ export class Roster {
 
   protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
   protected readonly noteText = signal('');
+
+  /**
+   * The teacher panel: the date and the end-of-class correction, behind one
+   * control instead of on the screen a student is handed. It is closed by any
+   * tap in the list below, for the same reason the settings screen re-locks on
+   * every exit — the phone changes hands mid-class.
+   */
+  protected readonly panelOpen = signal(false);
 
   protected readonly closing = signal(false);
   protected readonly closePicked = signal<ReadonlySet<string>>(new Set<string>());
@@ -201,14 +210,27 @@ export class Roster {
 
   protected readonly isEmpty = computed(() => !this.search() && !this.sections().length);
 
+  /** The dates the workbooks name — the app never invents one. */
+  protected readonly dateOptions = computed(() =>
+    this.store.sessionDates().map((iso) => ({ iso, label: longDate(iso, this.i18n.locale()) })),
+  );
+
+  protected readonly isToday = computed(() => this.store.date() === todayIso());
+
   constructor() {
+    // Only the route id is a dependency: reading the course list untracked
+    // keeps a reload from re-running this and shutting the panel on the teacher
+    // in the middle of picking a date.
     effect(() => {
       const id = this.routeId();
       if (!id) return;
-      this.store.select(id);
-      if (!this.store.courses().length && this.settings.configured()) {
-        void this.store.load();
-      }
+      untracked(() => {
+        this.store.select(id);
+        this.panelOpen.set(false);
+        if (!this.store.courses().length && this.settings.configured()) {
+          void this.store.load();
+        }
+      });
     });
 
     this.destroyRef.onDestroy(() => {
@@ -377,6 +399,38 @@ export class Roster {
   // Closing the session
   // -------------------------------------------------------------------------
 
+  // -------------------------------------------------------------------------
+  // The teacher panel
+  // -------------------------------------------------------------------------
+
+  protected togglePanel(): void {
+    this.panelOpen.update((open) => !open);
+  }
+
+  protected closePanel(): void {
+    if (this.panelOpen()) this.panelOpen.set(false);
+  }
+
+  /**
+   * Reads another date's session.
+   *
+   * A class is rarely closed on the spot, so the previous evening has to be
+   * reachable. The panel stays open: picking a date is usually the first half
+   * of correcting it. A date this app never saw being taught captured no
+   * announcements, so it offers nothing to close — see `captureAnnounced`.
+   */
+  protected onDate(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    this.store.date.set(value);
+    void this.store.load();
+  }
+
+  protected today(): void {
+    this.store.date.set(todayIso());
+    void this.store.load();
+  }
+
   /**
    * Opens the correction sheet, with every no-show ticked.
    *
@@ -387,6 +441,7 @@ export class Roster {
    * human reading their name. A yes/no dialog would not have given them one.
    */
   protected openClosure(): void {
+    this.panelOpen.set(false);
     this.closePicked.set(new Set(this.noShows().map((entry) => entry.key)));
     this.closePin.set('');
     this.closeError.set(null);
@@ -438,6 +493,7 @@ export class Roster {
   // -------------------------------------------------------------------------
 
   protected onSearch(event: Event): void {
+    this.closePanel();
     this.search.set((event.target as HTMLInputElement).value);
   }
 
@@ -502,9 +558,9 @@ export class Roster {
     return this.t(count > 1 ? 'roster.hereMany' : 'roster.hereOne');
   }
 
-  protected closeTriggerLabel(): string {
+  protected pendingLabel(): string {
     const n = this.noShows().length;
-    return this.t(n > 1 ? 'close.triggerMany' : 'close.triggerOne', { n });
+    return this.t(n > 1 ? 'teacher.pendingMany' : 'teacher.pendingOne', { n });
   }
 
   protected closeConfirmLabel(): string {

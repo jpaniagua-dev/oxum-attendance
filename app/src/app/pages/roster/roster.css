@@ -80,6 +80,69 @@ app-lang-switch {
   stroke-linejoin: round;
 }
 
+/* Three dots, so the one control a student must not press reads as a menu. */
+.dots svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.icon-btn.on {
+  color: var(--text);
+  border-color: var(--accent-text);
+}
+
+/* ---------------------------------------------------------------------------
+   The teacher panel
+   --------------------------------------------------------------------------- */
+
+/*
+ * The date and the end-of-class correction, out of sight until asked for.
+ * They used to sit under the roster, where a student scrolling to the bottom
+ * found them. Being inside the masthead means it also disappears the moment
+ * anything below is touched.
+ */
+.teacher-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--gap);
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.panel-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.panel-date select {
+  max-width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-hi);
+  color: var(--text);
+  font: inherit;
+  text-transform: capitalize;
+}
+
+/* How many corrections the button is about, before it is pressed. */
+.teacher-panel .pending {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.teacher-panel .note {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
 .meta {
   display: flex;
   align-items: center;
@@ -420,10 +483,6 @@ main.waiting-screen {
   flex-wrap: wrap;
   gap: var(--gap);
   align-items: center;
-}
-
-.close-trigger {
-  margin-left: auto;
 }
 
 /* ---------------------------------------------------------------------------

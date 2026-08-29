@@ -9,6 +9,25 @@
         <p class="note date">{{ date() }}</p>
       </div>
       <app-lang-switch />
+      <!--
+        Everything only a teacher needs lives behind this one control: the date
+        and the end-of-class correction. The phone spends the hour in students'
+        hands, and a button they can reach is a button they can press.
+      -->
+      <button
+        type="button"
+        class="icon-btn dots"
+        [class.on]="panelOpen()"
+        [attr.aria-expanded]="panelOpen()"
+        [attr.aria-label]="t('teacher.open')"
+        (click)="togglePanel()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="5" r="1.7" />
+          <circle cx="12" cy="12" r="1.7" />
+          <circle cx="12" cy="19" r="1.7" />
+        </svg>
+      </button>
       <a class="icon-btn" routerLink="/reglages" [attr.aria-label]="t('common.settings')">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="3" />
@@ -16,6 +35,41 @@
         </svg>
       </a>
     </div>
+
+    @if (panelOpen()) {
+      <div class="teacher-panel">
+        <label class="panel-date">
+          <span class="eyebrow">{{ t('session.dateLabel') }}</span>
+          <select (change)="onDate($event)">
+            @for (option of dateOptions(); track option.iso) {
+              <option [value]="option.iso" [selected]="option.iso === store.date()">
+                {{ option.label }}
+              </option>
+            }
+          </select>
+        </label>
+
+        @if (!isToday()) {
+          <button type="button" class="btn btn-ghost" (click)="today()">
+            {{ t('session.today') }}
+          </button>
+        }
+
+        <!--
+          No announcement left hanging means nothing to correct, and the absence
+          of this button is itself the answer: a date this app never saw being
+          taught cannot be closed at all.
+        -->
+        @if (current.hasSession && noShows().length) {
+          <p class="pending">{{ pendingLabel() }}</p>
+          <button type="button" class="btn btn-danger" (click)="openClosure()">
+            {{ t('teacher.close') }}
+          </button>
+        } @else {
+          <p class="note">{{ t('teacher.nothingToClose') }}</p>
+        }
+      </div>
+    }
 
     <div class="meta">
       <span class="tally">
@@ -63,7 +117,7 @@
     </label>
   </header>
 
-  <main>
+  <main (pointerdown)="closePanel()">
     @if (!current.hasSession) {
       <div class="message error">
         {{ t('roster.noColumn') }}
@@ -155,13 +209,6 @@
       >
         {{ t('roster.walkin') }}
       </button>
-
-      <!-- Only when there is something to correct: no dead control in a class. -->
-      @if (current.hasSession && noShows().length) {
-        <button type="button" class="btn btn-ghost close-trigger" (click)="openClosure()">
-          {{ closeTriggerLabel() }}
-        </button>
-      }
     </div>
   </main>
 
