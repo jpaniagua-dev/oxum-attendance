@@ -15,18 +15,6 @@
   <h1>{{ t('courses.title') }}</h1>
   <p class="note date">{{ date() }}</p>
 
-  <!--
-    The date is chosen inside the class, where the correction happens. All that
-    is left here is the way back, for a list still showing another evening.
-  -->
-  @if (!isToday()) {
-    <div class="date-picker">
-      <button type="button" class="btn btn-ghost" (click)="today()">
-        {{ t('session.today') }}
-      </button>
-    </div>
-  }
-
   @if (store.loading()) {
     <p class="note">{{ t('courses.loading') }}</p>
   }

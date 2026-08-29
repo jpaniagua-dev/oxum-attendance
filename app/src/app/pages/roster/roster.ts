@@ -14,7 +14,7 @@ import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { I18nService } from '../../core/i18n';
-import { SessionStore, todayIso } from '../../core/session.store';
+import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { fold, longDate } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
@@ -280,8 +280,6 @@ export class Roster {
     this.store.sessionDates().map((iso) => ({ iso, label: longDate(iso, this.i18n.locale()) })),
   );
 
-  protected readonly isToday = computed(() => this.store.date() === todayIso());
-
   constructor() {
     // Only the route id is a dependency: reading the course list untracked
     // keeps a reload from re-running this and shutting the panel on the teacher
@@ -491,11 +489,6 @@ export class Roster {
     void this.store.load();
   }
 
-  protected today(): void {
-    this.store.date.set(todayIso());
-    void this.store.load();
-  }
-
   /**
    * Opens the correction sheet, with every no-show ticked.
    *
@@ -629,22 +622,6 @@ export class Roster {
     return this.t(n > 1 ? 'close.confirmMany' : 'close.confirmOne', { n });
   }
 
-  protected syncLabel(): string {
-    switch (this.store.sync()) {
-      case 'sending':
-        return this.t('sync.sending');
-      case 'pending':
-        return this.t('sync.pending', { n: this.store.queue().length });
-      case 'offline':
-        return this.t('sync.offline');
-      default:
-        return this.t('sync.idle');
-    }
-  }
-
-  protected retrySync(): void {
-    void this.store.flush();
-  }
 }
 
 /** Most recently arrived first, so the person who just tapped is on top. */

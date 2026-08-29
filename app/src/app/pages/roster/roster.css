@@ -165,15 +165,7 @@ app-lang-switch {
    could reach if everybody came.
    --------------------------------------------------------------------------- */
 
-.meta {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem 1rem;
-  flex-wrap: wrap;
-}
-
 .balance {
-  flex: 1 1 15rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: end;
@@ -259,22 +251,6 @@ app-lang-switch {
   height: 13px;
   border-radius: 999px;
   background: var(--line);
-}
-
-.pill {
-  padding: 0.3rem 0.75rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-
-.pill.warn {
-  border-color: var(--accent-text);
-  color: var(--accent-text);
 }
 
 /* ---------------------------------------------------------------------------

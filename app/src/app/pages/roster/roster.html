@@ -49,12 +49,6 @@
           </select>
         </label>
 
-        @if (!isToday()) {
-          <button type="button" class="btn btn-ghost" (click)="today()">
-            {{ t('session.today') }}
-          </button>
-        }
-
         <!--
           No announcement left hanging means nothing to correct, and the absence
           of this button is itself the answer: a date this app never saw being
@@ -76,8 +70,7 @@
       of one number: what the teacher needs to see is whether the two sides
       match, and the shape says it before the digits do.
     -->
-    <div class="meta">
-      <div class="balance">
+    <div class="balance">
         <p class="side-count leader">
           <span class="eyebrow">{{ roleLabel('leader') }}</span>
           <strong>{{ balance().leader.here }}</strong>
@@ -97,16 +90,6 @@
             <i class="fill" [style.width.%]="share(balance().follower)"></i>
           </span>
         </div>
-      </div>
-
-      <button
-        type="button"
-        class="pill"
-        [class.warn]="store.sync() !== 'idle'"
-        (click)="retrySync()"
-      >
-        {{ syncLabel() }}
-      </button>
     </div>
 
     <label class="search">

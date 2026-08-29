@@ -14,8 +14,6 @@ export interface Extra {
   role: Role;
 }
 
-export type SyncState = 'idle' | 'sending' | 'pending' | 'offline';
-
 const QUEUE_KEY = 'attendance.queue';
 const RETRY_MS = 15_000;
 
@@ -89,8 +87,10 @@ export class SessionStore {
    * about what can actually be opened.
    *
    * The columns are keyed by month and day alone, so the year is inferred — see
-   * `isoFromSessionKey`. The selected date is always in the list, even when no
-   * workbook names it, so the control can show what it is currently on.
+   * `isoFromSessionKey`. Today and the selected date are always in the list even
+   * when no workbook names them: the control has to be able to show where it
+   * stands, and getting back to the evening being taught must never depend on a
+   * second button.
    */
   readonly sessionDates = computed<string[]>(() => {
     const found = new Set<string>();
@@ -103,6 +103,7 @@ export class SessionStore {
       }
     }
     found.add(this.date());
+    found.add(todayIso());
     // ISO dates sort chronologically as plain strings.
     return [...found].sort();
   });
@@ -110,12 +111,6 @@ export class SessionStore {
   readonly course = computed(() => {
     const id = this.courseId();
     return this.courses().find((course) => course.id === id) ?? null;
-  });
-
-  readonly sync = computed<SyncState>(() => {
-    if (this.syncing()) return 'sending';
-    if (!this.queue().length) return 'idle';
-    return navigator.onLine ? 'pending' : 'offline';
   });
 
   /** Present count and roster size for the selected class, walk-ins included. */

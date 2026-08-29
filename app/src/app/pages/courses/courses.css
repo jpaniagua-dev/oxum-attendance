@@ -83,12 +83,6 @@ main {
   text-transform: capitalize;
 }
 
-/* Shown only when the list is still on another evening than today's. */
-.date-picker {
-  display: flex;
-  margin-top: 0.4rem;
-}
-
 .actions.start {
   justify-content: flex-start;
 }

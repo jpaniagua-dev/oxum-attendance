@@ -37,7 +37,6 @@ const FR = {
     "Classeur « {name} » inaccessible. Vérifie qu'il est toujours partagé avec le compte Google qui a déployé le script.",
 
   'session.dateLabel': 'Séance du',
-  'session.today': "Aujourd'hui",
 
   'teacher.open': 'Réglages de la séance',
   'teacher.close': 'Terminer la classe',
@@ -63,11 +62,6 @@ const FR = {
   'roster.loading': 'Chargement du cours…',
   'roster.gone': "Ce cours n'est plus dans la liste.",
   'roster.backToCourses': 'Retour aux cours',
-
-  'sync.sending': 'Envoi…',
-  'sync.pending': '{n} en attente',
-  'sync.offline': 'Hors ligne',
-  'sync.idle': 'À jour',
 
   'untick.title': '{name} est noté présent',
   'untick.body': 'Retirer cette présence ? Le classeur sera mis à jour tout de suite.',
@@ -208,7 +202,6 @@ const EN: Record<MessageKey, string> = {
     'Workbook “{name}” cannot be opened. Check it is still shared with the Google account that deployed the script.',
 
   'session.dateLabel': 'Session of',
-  'session.today': 'Today',
 
   'teacher.open': 'Session controls',
   'teacher.close': 'End the class',
@@ -234,11 +227,6 @@ const EN: Record<MessageKey, string> = {
   'roster.loading': 'Loading the class…',
   'roster.gone': 'This class is no longer in the list.',
   'roster.backToCourses': 'Back to classes',
-
-  'sync.sending': 'Sending…',
-  'sync.pending': '{n} waiting',
-  'sync.offline': 'Offline',
-  'sync.idle': 'Up to date',
 
   'untick.title': '{name} is marked here',
   'untick.body': 'Remove this attendance? The workbook will be updated straight away.',

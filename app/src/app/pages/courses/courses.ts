@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService } from '../../core/i18n';
-import { SessionStore, todayIso } from '../../core/session.store';
+import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { longDate } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
@@ -55,14 +55,6 @@ export class Courses {
   protected reload(): void {
     void this.store.load();
   }
-
-  /** The only date control left here: back to the evening being taught. */
-  protected today(): void {
-    this.store.date.set(todayIso());
-    void this.store.load();
-  }
-
-  protected readonly isToday = computed(() => this.store.date() === todayIso());
 
   protected countOf(course: Course): number {
     return course.groups.reduce((total, group) => total + group.students.length, 0);
