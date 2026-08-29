@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ApiService } from '../../core/api.service';
@@ -38,7 +31,6 @@ const THEMES: ThemeChoice[] = ['system', 'light', 'dark'];
 })
 export class Settings {
   private readonly api = inject(ApiService);
-  private readonly destroyRef = inject(DestroyRef);
   protected readonly settings = inject(SettingsService);
   protected readonly store = inject(SessionStore);
   protected readonly theme = inject(ThemeService);
@@ -52,9 +44,6 @@ export class Settings {
   protected readonly pin = signal('');
   protected readonly savedNote = signal<string | null>(null);
 
-  protected readonly pinEntry = signal('');
-  protected readonly pinError = signal(false);
-
   protected readonly probe = signal<Probe>({ kind: 'idle' });
 
   protected readonly workbooks = signal<Workbook[]>([]);
@@ -64,17 +53,11 @@ export class Settings {
   protected readonly adding = signal(false);
   protected readonly removing = signal<Workbook | null>(null);
 
-  protected readonly locked = computed(() => !this.settings.settingsOpen());
   protected readonly demo = computed(() => this.settings.endpoint() === DEMO_ENDPOINT);
   protected readonly courses = computed(() => this.store.courses().filter((c) => !c.unreachable));
 
   constructor() {
-    if (this.settings.configured() && this.settings.settingsOpen()) {
-      void this.loadWorkbooks();
-    }
-
-    // Leaving the screen locks it again, whichever way you leave.
-    this.destroyRef.onDestroy(() => this.settings.lock());
+    if (this.settings.configured()) void this.loadWorkbooks();
   }
 
   protected themeLabel(choice: ThemeChoice): string {
@@ -83,31 +66,6 @@ export class Settings {
 
   protected chooseTheme(choice: ThemeChoice): void {
     this.theme.set(choice);
-  }
-
-  // -------------------------------------------------------------------------
-  // Unlocking
-  // -------------------------------------------------------------------------
-
-  protected onPinEntry(event: Event): void {
-    const value = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 4);
-    this.pinEntry.set(value);
-    this.pinError.set(false);
-    if (value.length === 4) this.tryUnlock();
-  }
-
-  protected tryUnlock(): void {
-    if (this.settings.unlock(this.pinEntry())) {
-      this.pinEntry.set('');
-      void this.loadWorkbooks();
-      return;
-    }
-    this.pinError.set(true);
-    this.pinEntry.set('');
-  }
-
-  protected lock(): void {
-    this.settings.lock();
   }
 
   // -------------------------------------------------------------------------

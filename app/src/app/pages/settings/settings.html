@@ -1,263 +1,227 @@
-@if (locked()) {
-  <main class="gate">
-    <div class="stage-inner">
-      <p class="eyebrow">{{ t('settings.title') }}</p>
-      <h1>{{ t('gate.title') }}</h1>
-      <p class="note">{{ t('gate.body') }}</p>
-      <label class="field pin-field">
-        <span>{{ t('gate.code') }}</span>
-        <input
-          type="password"
-          inputmode="numeric"
-          autocomplete="off"
-          maxlength="4"
-          placeholder="••••"
-          [value]="pinEntry()"
-          (input)="onPinEntry($event)"
-        />
-      </label>
-      @if (pinError()) {
-        <p class="field-error">{{ t('gate.wrong') }}</p>
-      }
-      <div class="actions">
-        <a class="btn btn-ghost" routerLink="/">{{ t('common.back') }}</a>
-        <button type="button" class="btn btn-primary" (click)="tryUnlock()">
-          {{ t('gate.open') }}
-        </button>
-      </div>
+<header class="masthead">
+  <a class="icon-btn" routerLink="/" [attr.aria-label]="t('common.back')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+  </a>
+  <h1>{{ t('settings.title') }}</h1>
+</header>
+
+<main>
+  @if (demo()) {
+    <div class="message">
+      <strong>{{ t('demo.banner') }}</strong> {{ t('demo.bannerBody') }}
     </div>
-  </main>
-} @else {
-  <header class="masthead">
-    <a class="icon-btn" routerLink="/" [attr.aria-label]="t('common.back')">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
-    </a>
-    <h1>{{ t('settings.title') }}</h1>
-    @if (settings.hasPin()) {
-      <button type="button" class="btn btn-ghost btn-small" (click)="lock()">
-        {{ t('settings.lock') }}
+  }
+
+  <!-- Connection ------------------------------------------------------- -->
+  <section class="card">
+    <h2>{{ t('conn.title') }}</h2>
+    <p class="note">{{ t('conn.body') }}</p>
+
+    <label class="field">
+      <span>{{ t('conn.url') }}</span>
+      <input
+        type="url"
+        inputmode="url"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="https://script.google.com/macros/s/…/exec"
+        [value]="endpoint()"
+        (input)="onEndpoint($event)"
+      />
+    </label>
+
+    <label class="field">
+      <span>{{ t('conn.token') }}</span>
+      <input
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="KIOSK_TOKEN"
+        [value]="token()"
+        (input)="onToken($event)"
+      />
+    </label>
+
+    <label class="field">
+      <span>{{ t('conn.pin') }}</span>
+      <input
+        type="password"
+        inputmode="numeric"
+        autocomplete="off"
+        maxlength="4"
+        [placeholder]="settings.hasPin() ? t('conn.pinUnchanged') : t('conn.pinNew')"
+        [value]="pin()"
+        (input)="onPin($event)"
+      />
+      <small>
+        {{ settings.hasPin() ? t('conn.pinHintSet') : t('conn.pinHintNone') }}
+      </small>
+    </label>
+
+    @if (probe().kind === 'ok') {
+      <div class="message good">{{ probe().message }}</div>
+    }
+    @if (probe().kind === 'error') {
+      <div class="message error">{{ probe().message }}</div>
+    }
+    @if (savedNote(); as note) {
+      <div class="message good">{{ note }}</div>
+    }
+
+    <div class="actions">
+      <button
+        type="button"
+        class="btn btn-ghost"
+        [disabled]="probe().kind === 'testing' || !endpoint() || !token()"
+        (click)="test()"
+      >
+        {{ probe().kind === 'testing' ? t('conn.testing') : t('conn.test') }}
       </button>
+      <button type="button" class="btn btn-primary" (click)="save()">
+        {{ t('conn.save') }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Appearance ------------------------------------------------------- -->
+  <section class="card">
+    <h2>{{ t('theme.title') }}</h2>
+    <p class="note">{{ t('theme.body') }}</p>
+    <div class="segmented" role="group" [attr.aria-label]="t('theme.title')">
+      @for (choice of themes; track choice) {
+        <button
+          type="button"
+          [attr.aria-pressed]="theme.current() === choice"
+          (click)="chooseTheme(choice)"
+        >
+          {{ themeLabel(choice) }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Workbooks -------------------------------------------------------- -->
+  <section class="card">
+    <h2>{{ t('books.title') }}</h2>
+    <p class="note">{{ t('books.body') }}</p>
+
+    @if (workbookError(); as error) {
+      <div class="message error">{{ error }}</div>
     }
-  </header>
 
-  <main>
-    @if (demo()) {
-      <div class="message">
-        <strong>{{ t('demo.banner') }}</strong> {{ t('demo.bannerBody') }}
-      </div>
+    @if (workbooksLoading()) {
+      <p class="note">{{ t('books.loading') }}</p>
     }
 
-    <!-- Connection ------------------------------------------------------- -->
-    <section class="card">
-      <h2>{{ t('conn.title') }}</h2>
-      <p class="note">{{ t('conn.body') }}</p>
+    <div class="rows">
+      @for (workbook of workbooks(); track workbook.id) {
+        <div class="row" [class.broken]="!workbook.reachable">
+          <div class="row-main">
+            <strong>{{ workbook.title || workbook.label }}</strong>
+            @if (workbook.reachable) {
+              <span>
+                @if (workbook.courses?.length) {
+                  {{ workbook.courses?.join(' · ') }}
+                } @else {
+                  {{ t('books.noCourses') }}
+                }
+              </span>
+            } @else {
+              <span class="broken-text">{{ workbook.error }}</span>
+            }
+          </div>
+          <button type="button" class="btn btn-danger btn-small" (click)="askRemove(workbook)">
+            {{ t('books.remove') }}
+          </button>
+        </div>
+      }
+    </div>
 
+    <form class="add" (submit)="addWorkbook($event)">
       <label class="field">
-        <span>{{ t('conn.url') }}</span>
+        <span>{{ t('books.addLabel') }}</span>
         <input
           type="url"
           inputmode="url"
           autocomplete="off"
           spellcheck="false"
-          placeholder="https://script.google.com/macros/s/…/exec"
-          [value]="endpoint()"
-          (input)="onEndpoint($event)"
+          placeholder="https://docs.google.com/spreadsheets/d/…"
+          [value]="newWorkbook()"
+          (input)="onNewWorkbook($event)"
         />
       </label>
+      <button type="submit" class="btn btn-primary" [disabled]="adding() || !newWorkbook()">
+        {{ adding() ? t('books.checking') : t('books.add') }}
+      </button>
+    </form>
+  </section>
 
-      <label class="field">
-        <span>{{ t('conn.token') }}</span>
-        <input
-          type="password"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="KIOSK_TOKEN"
-          [value]="token()"
-          (input)="onToken($event)"
-        />
-      </label>
+  <!-- Visibility ------------------------------------------------------- -->
+  <section class="card">
+    <h2>{{ t('vis.title') }}</h2>
+    <p class="note">{{ t('vis.body') }}</p>
 
-      <label class="field">
-        <span>{{ t('conn.pin') }}</span>
-        <input
-          type="password"
-          inputmode="numeric"
-          autocomplete="off"
-          maxlength="4"
-          [placeholder]="settings.hasPin() ? t('conn.pinUnchanged') : t('conn.pinNew')"
-          [value]="pin()"
-          (input)="onPin($event)"
-        />
-        <small>
-          {{ settings.hasPin() ? t('conn.pinHintSet') : t('conn.pinHintNone') }}
-        </small>
-      </label>
-
-      @if (probe().kind === 'ok') {
-        <div class="message good">{{ probe().message }}</div>
-      }
-      @if (probe().kind === 'error') {
-        <div class="message error">{{ probe().message }}</div>
-      }
-      @if (savedNote(); as note) {
-        <div class="message good">{{ note }}</div>
-      }
-
-      <div class="actions">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          [disabled]="probe().kind === 'testing' || !endpoint() || !token()"
-          (click)="test()"
-        >
-          {{ probe().kind === 'testing' ? t('conn.testing') : t('conn.test') }}
-        </button>
-        <button type="button" class="btn btn-primary" (click)="save()">
-          {{ t('conn.save') }}
-        </button>
-      </div>
-    </section>
-
-    <!-- Appearance ------------------------------------------------------- -->
-    <section class="card">
-      <h2>{{ t('theme.title') }}</h2>
-      <p class="note">{{ t('theme.body') }}</p>
-      <div class="segmented" role="group" [attr.aria-label]="t('theme.title')">
-        @for (choice of themes; track choice) {
+    <div class="rows">
+      @for (course of courses(); track course.id) {
+        <div class="row">
+          <div class="row-main">
+            <strong>{{ course.title }}</strong>
+            <span>{{ course.workbookLabel }}</span>
+          </div>
           <button
             type="button"
-            [attr.aria-pressed]="theme.current() === choice"
-            (click)="chooseTheme(choice)"
+            class="btn btn-small"
+            [class.btn-ghost]="!course.hidden"
+            [class.btn-primary]="course.hidden"
+            (click)="toggleCourse(course)"
           >
-            {{ themeLabel(choice) }}
-          </button>
-        }
-      </div>
-    </section>
-
-    <!-- Workbooks -------------------------------------------------------- -->
-    <section class="card">
-      <h2>{{ t('books.title') }}</h2>
-      <p class="note">{{ t('books.body') }}</p>
-
-      @if (workbookError(); as error) {
-        <div class="message error">{{ error }}</div>
-      }
-
-      @if (workbooksLoading()) {
-        <p class="note">{{ t('books.loading') }}</p>
-      }
-
-      <div class="rows">
-        @for (workbook of workbooks(); track workbook.id) {
-          <div class="row" [class.broken]="!workbook.reachable">
-            <div class="row-main">
-              <strong>{{ workbook.title || workbook.label }}</strong>
-              @if (workbook.reachable) {
-                <span>
-                  @if (workbook.courses?.length) {
-                    {{ workbook.courses?.join(' · ') }}
-                  } @else {
-                    {{ t('books.noCourses') }}
-                  }
-                </span>
-              } @else {
-                <span class="broken-text">{{ workbook.error }}</span>
-              }
-            </div>
-            <button type="button" class="btn btn-danger btn-small" (click)="askRemove(workbook)">
-              {{ t('books.remove') }}
-            </button>
-          </div>
-        }
-      </div>
-
-      <form class="add" (submit)="addWorkbook($event)">
-        <label class="field">
-          <span>{{ t('books.addLabel') }}</span>
-          <input
-            type="url"
-            inputmode="url"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="https://docs.google.com/spreadsheets/d/…"
-            [value]="newWorkbook()"
-            (input)="onNewWorkbook($event)"
-          />
-        </label>
-        <button type="submit" class="btn btn-primary" [disabled]="adding() || !newWorkbook()">
-          {{ adding() ? t('books.checking') : t('books.add') }}
-        </button>
-      </form>
-    </section>
-
-    <!-- Visibility ------------------------------------------------------- -->
-    <section class="card">
-      <h2>{{ t('vis.title') }}</h2>
-      <p class="note">{{ t('vis.body') }}</p>
-
-      <div class="rows">
-        @for (course of courses(); track course.id) {
-          <div class="row">
-            <div class="row-main">
-              <strong>{{ course.title }}</strong>
-              <span>{{ course.workbookLabel }}</span>
-            </div>
-            <button
-              type="button"
-              class="btn btn-small"
-              [class.btn-ghost]="!course.hidden"
-              [class.btn-primary]="course.hidden"
-              (click)="toggleCourse(course)"
-            >
-              {{ course.hidden ? t('vis.hidden') : t('vis.shown') }}
-            </button>
-          </div>
-        }
-      </div>
-
-      @if (!courses().length) {
-        <p class="note">{{ t('vis.none') }}</p>
-      }
-    </section>
-
-    <!-- Demo ------------------------------------------------------------- -->
-    <section class="card">
-      <h2>{{ t('demo.title') }}</h2>
-      <p class="note">{{ t('demo.body') }}</p>
-      <div class="actions">
-        @if (demo()) {
-          <button type="button" class="btn btn-ghost" (click)="leaveDemo()">
-            {{ t('demo.leave') }}
-          </button>
-        } @else {
-          <button type="button" class="btn btn-ghost" (click)="startDemo()">
-            {{ t('demo.start') }}
-          </button>
-        }
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>{{ t('install.title') }}</h2>
-      <p class="note">{{ t('install.body') }}</p>
-    </section>
-  </main>
-
-  @if (removing(); as workbook) {
-    <div class="stage" role="alertdialog" aria-labelledby="remove-title">
-      <div class="stage-inner">
-        <h1 id="remove-title">{{ t('remove.title') }}</h1>
-        <p class="note">{{ t('remove.body', { name: workbook.title || workbook.label }) }}</p>
-        <div class="actions">
-          <button type="button" class="btn btn-ghost" (click)="cancelRemove()">
-            {{ t('common.cancel') }}
-          </button>
-          <button type="button" class="btn btn-danger" (click)="confirmRemove()">
-            {{ t('books.remove') }}
+            {{ course.hidden ? t('vis.hidden') : t('vis.shown') }}
           </button>
         </div>
+      }
+    </div>
+
+    @if (!courses().length) {
+      <p class="note">{{ t('vis.none') }}</p>
+    }
+  </section>
+
+  <!-- Demo ------------------------------------------------------------- -->
+  <section class="card">
+    <h2>{{ t('demo.title') }}</h2>
+    <p class="note">{{ t('demo.body') }}</p>
+    <div class="actions">
+      @if (demo()) {
+        <button type="button" class="btn btn-ghost" (click)="leaveDemo()">
+          {{ t('demo.leave') }}
+        </button>
+      } @else {
+        <button type="button" class="btn btn-ghost" (click)="startDemo()">
+          {{ t('demo.start') }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>{{ t('install.title') }}</h2>
+    <p class="note">{{ t('install.body') }}</p>
+  </section>
+</main>
+
+@if (removing(); as workbook) {
+  <div class="stage" role="alertdialog" aria-labelledby="remove-title">
+    <div class="stage-inner">
+      <h1 id="remove-title">{{ t('remove.title') }}</h1>
+      <p class="note">{{ t('remove.body', { name: workbook.title || workbook.label }) }}</p>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" (click)="cancelRemove()">
+          {{ t('common.cancel') }}
+        </button>
+        <button type="button" class="btn btn-danger" (click)="confirmRemove()">
+          {{ t('books.remove') }}
+        </button>
       </div>
     </div>
-  }
+  </div>
 }

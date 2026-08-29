@@ -107,30 +107,26 @@ const FR = {
   'note.save': 'Enregistrer',
 
   'settings.title': 'Réglages',
-  'settings.lock': 'Verrouiller',
 
   'leave.title': 'Quitter le cours',
   'leave.body':
     "La liste des cours mène aux réglages : le code est demandé avant de sortir de la classe.",
   'leave.confirm': 'Quitter',
 
-  'gate.title': 'Code à quatre chiffres',
-  'gate.body':
-    "Les réglages sont protégés parce que l'appareil passe de main en main pendant le cours.",
   'gate.code': 'Code',
   'gate.wrong': 'Code incorrect.',
-  'gate.open': 'Ouvrir',
 
   'conn.title': 'Connexion au studio',
   'conn.body':
     "L'URL du déploiement Apps Script et son jeton. Ces deux valeurs sont propres à cet appareil.",
   'conn.url': 'URL de déploiement',
   'conn.token': 'Jeton',
-  'conn.pin': 'Code des réglages',
+  'conn.pin': 'Code du cours',
   'conn.pinUnchanged': 'Inchangé',
   'conn.pinNew': '4 chiffres',
   'conn.pinHintSet': 'Laisse vide pour garder le code actuel.',
-  'conn.pinHintNone': "Sans code, n'importe qui peut ouvrir cette page depuis le cours.",
+  'conn.pinHintNone':
+    "Demandé pour sortir d'un cours et pour le terminer. Sans code, l'élève qui tient le téléphone peut faire les deux.",
   'conn.test': 'Tester',
   'conn.testing': 'Test…',
   'conn.save': 'Enregistrer',
@@ -292,29 +288,26 @@ const EN: Record<MessageKey, string> = {
   'note.save': 'Save',
 
   'settings.title': 'Settings',
-  'settings.lock': 'Lock',
 
   'leave.title': 'Leave the class',
   'leave.body':
     'The class list leads to the settings, so the code is asked before leaving the class.',
   'leave.confirm': 'Leave',
 
-  'gate.title': 'Four-digit code',
-  'gate.body': 'Settings are protected because the device is passed around during class.',
   'gate.code': 'Code',
   'gate.wrong': 'Wrong code.',
-  'gate.open': 'Open',
 
   'conn.title': 'Studio connection',
   'conn.body':
     'The Apps Script deployment URL and its token. Both belong to this device only.',
   'conn.url': 'Deployment URL',
   'conn.token': 'Token',
-  'conn.pin': 'Settings code',
+  'conn.pin': 'Class code',
   'conn.pinUnchanged': 'Unchanged',
   'conn.pinNew': '4 digits',
   'conn.pinHintSet': 'Leave empty to keep the current code.',
-  'conn.pinHintNone': 'Without a code, anyone can open this page during class.',
+  'conn.pinHintNone':
+    'Asked to leave a class and to end one. Without a code, the student holding the phone can do both.',
   'conn.test': 'Test',
   'conn.testing': 'Testing…',
   'conn.save': 'Save',

@@ -5,7 +5,7 @@ const KEY = 'attendance.settings';
 interface StoredSettings {
   endpoint: string;
   token: string;
-  /** Four digits, guarding the settings screen on a device passed around. */
+  /** Four digits, asked to leave a class and to close one. */
   pin: string;
 }
 
@@ -19,6 +19,10 @@ const EMPTY: StoredSettings = { endpoint: '', token: '', pin: '' };
  * shared — the list of workbooks — lives in script properties instead, so
  * adding a class on one device shows it on the other.
  *
+ * This screen is not itself behind the code. It is reached only from the class
+ * list, and the way out of a class already asks for it — a second prompt on the
+ * far side of the first guards nothing.
+ *
  * The token sits in localStorage and in the page it came from; anyone holding
  * the unlocked device can read it. It is a barrier to discovery, not
  * authentication. See README.md.
@@ -27,9 +31,6 @@ const EMPTY: StoredSettings = { endpoint: '', token: '', pin: '' };
 export class SettingsService {
   private readonly stored = signal<StoredSettings>(this.read());
 
-  /** Cleared on every launch: unlocking is per app session, not remembered. */
-  private readonly unlockedNow = signal(false);
-
   readonly endpoint = computed(() => this.stored().endpoint);
   readonly token = computed(() => this.stored().token);
   readonly hasPin = computed(() => this.stored().pin.length > 0);
@@ -37,50 +38,25 @@ export class SettingsService {
   /** True once the backend can actually be called. */
   readonly configured = computed(() => !!this.stored().endpoint && !!this.stored().token);
 
-  /**
-   * Settings are reachable when there is no PIN yet, or after entering it.
-   * Without the first case an unconfigured install would lock out the very
-   * screen needed to configure it.
-   *
-   * Unlocking lasts exactly as long as the visit: leaving the screen locks it
-   * again. The device spends the class in a student's hands, and a settings
-   * page that stays open behind a back button is not protected at all.
-   */
-  readonly settingsOpen = computed(() => !this.hasPin() || this.unlockedNow());
-
   save(patch: Partial<StoredSettings>): void {
     const next = { ...this.stored(), ...patch };
     next.endpoint = next.endpoint.trim().replace(/\s+/g, '');
     next.token = next.token.trim();
     this.stored.set(next);
     this.write(next);
-
-    // Setting the very first PIN would otherwise drop the gate over the page
-    // the person is still standing on.
-    if (patch.pin) this.unlockedNow.set(true);
   }
 
   /**
-   * Checks the code without granting anything.
+   * Checks the code, and grants nothing by doing so.
    *
-   * Closing a session asks for the same four digits, but it must not hand out
-   * the settings screen as a side effect: the two are guarded by one code, not
-   * joined into one permission.
+   * The settings screen is no longer gated: it sits behind the class list, and
+   * the way out of a class already asks for these four digits. What still asks
+   * is the pair of steps that can undo somebody's evening — leaving a class and
+   * closing a session — and neither hands out anything beyond the step it
+   * guards.
    */
   matches(candidate: string): boolean {
     return candidate === this.stored().pin;
-  }
-
-  unlock(candidate: string): boolean {
-    if (this.matches(candidate)) {
-      this.unlockedNow.set(true);
-      return true;
-    }
-    return false;
-  }
-
-  lock(): void {
-    this.unlockedNow.set(false);
   }
 
   private read(): StoredSettings {
