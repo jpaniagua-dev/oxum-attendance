@@ -450,7 +450,6 @@ main.waiting-screen {
   display: flex;
   margin-bottom: 0.5rem;
   border: 1px solid var(--line);
-  border-left: 3px solid transparent;
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
@@ -548,8 +547,8 @@ main.waiting-screen {
 
 /*
  * Being here is the role's own colour arriving on the card: a tinted ground, a
- * solid edge, a tick, and the name in full weight. Four cues, only one of them
- * colour.
+ * tick, the name in full weight, and the leading edge picking up the full
+ * strength of the colour. Four cues, only one of them colour.
  */
 .name.here {
   background: var(--role-soft);
