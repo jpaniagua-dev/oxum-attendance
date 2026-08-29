@@ -24,6 +24,12 @@ Three facts about a dance class, and what each one forces:
 - **Either teacher may be the one holding the phone**, and sometimes the one who is not
   running late. So the app installs per device and each teacher configures their own,
   while the list of classes is shared server-side.
+- **The phone spends the hour in students' hands.** So nothing a teacher alone should
+  reach is on the roster screen: the settings live one screen up, behind the class list,
+  and the four-digit code is asked on the way out of a class as well as into the settings.
+- **A trial student is a lead the school follows up.** So signing yourself in asks for a
+  phone number or an email, and writes it beside your name in the school's own
+  Commentaires column.
 - **The school opens new classes mid-season**, each with its own workbook. So workbooks
   are added from the settings screen, never from a constant in the source.
 - **The school teaches in French and English**, and a fair share of students are more
@@ -129,7 +135,10 @@ writing somewhere else.
 }
 ```
 
-`kind: "trial"` writes a walk-in into a free row instead, name and tick together.
+`kind: "trial"` writes a walk-in into a free row instead: name, tick, and — when the
+operation carries `commentColumn` and `text` — their contact details, all in one write.
+They travel together because a second operation would have to verify the name it had
+just written itself, and would fail alone if the row had been taken in between.
 `kind: "comment"` — reached by pressing and holding a name — writes free text into the
 block's `Commentaires` column — `commentColumn`
 and `text` rather than `sessionColumn` and `present`. An empty string clears the cell,

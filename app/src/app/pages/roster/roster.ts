@@ -9,14 +9,14 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { I18nService } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
-import { fold, longDate } from '../../core/format';
+import { contactLine, fold, longDate, looksLikeEmail } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
 import { Category, Course, Group, Role, Student } from '../../core/models';
 
@@ -86,13 +86,14 @@ interface Side {
  */
 @Component({
   selector: 'app-roster',
-  imports: [RouterLink, LangSwitch],
+  imports: [LangSwitch],
   templateUrl: './roster.html',
   styleUrl: './roster.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Roster {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly store = inject(SessionStore);
   protected readonly settings = inject(SettingsService);
@@ -112,8 +113,20 @@ export class Roster {
 
   protected readonly walkinOpen = signal(false);
   protected readonly walkinName = signal('');
+  protected readonly walkinPhone = signal('');
+  protected readonly walkinEmail = signal('');
   protected readonly walkinRole = signal<Role | null>(null);
   protected readonly walkinError = signal<string | null>(null);
+
+  /**
+   * Leaving this screen is guarded, because the class list is one tap from the
+   * settings and the phone spends the hour in students' hands. The same four
+   * digits as everywhere else, and — like closing a session — checked rather
+   * than spent: getting out of a class must not hand out the settings screen.
+   */
+  protected readonly leaving = signal(false);
+  protected readonly leavePin = signal('');
+  protected readonly leaveError = signal<string | null>(null);
 
   protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
   protected readonly noteText = signal('');
@@ -463,6 +476,42 @@ export class Roster {
   // -------------------------------------------------------------------------
 
   // -------------------------------------------------------------------------
+  // Leaving the class
+  // -------------------------------------------------------------------------
+
+  protected askLeave(): void {
+    if (!this.settings.hasPin()) {
+      void this.router.navigate(['/']);
+      return;
+    }
+    this.closePanel();
+    this.leavePin.set('');
+    this.leaveError.set(null);
+    this.leaving.set(true);
+  }
+
+  protected cancelLeave(): void {
+    this.leaving.set(false);
+    this.leavePin.set('');
+  }
+
+  protected onLeavePin(event: Event): void {
+    this.leavePin.set((event.target as HTMLInputElement).value);
+    this.leaveError.set(null);
+  }
+
+  protected confirmLeave(event: Event): void {
+    event.preventDefault();
+    if (!this.settings.matches(this.leavePin())) {
+      this.leaveError.set(this.t('gate.wrong'));
+      return;
+    }
+    this.leaving.set(false);
+    this.leavePin.set('');
+    void this.router.navigate(['/']);
+  }
+
+  // -------------------------------------------------------------------------
   // The teacher panel
   // -------------------------------------------------------------------------
 
@@ -565,6 +614,8 @@ export class Roster {
 
   protected openWalkin(): void {
     this.walkinName.set(this.search());
+    this.walkinPhone.set('');
+    this.walkinEmail.set('');
     this.walkinRole.set(null);
     this.walkinError.set(null);
     this.walkinOpen.set(true);
@@ -578,10 +629,28 @@ export class Roster {
     this.walkinName.set((event.target as HTMLInputElement).value);
   }
 
+  protected onWalkinPhone(event: Event): void {
+    this.walkinPhone.set((event.target as HTMLInputElement).value);
+    this.walkinError.set(null);
+  }
+
+  protected onWalkinEmail(event: Event): void {
+    this.walkinEmail.set((event.target as HTMLInputElement).value);
+    this.walkinError.set(null);
+  }
+
   protected chooseRole(role: Role): void {
     this.walkinRole.set(role);
   }
 
+  /**
+   * Signs a walk-in in, with the one thing the school needs afterwards.
+   *
+   * A trial student is a lead: the school follows them up in the days after the
+   * class, and it cannot do that from a first name alone. Either a phone or an
+   * email will do — somebody may have one and not the other, and turning a real
+   * person away at the door over a missing field is worse than a blank.
+   */
   protected submitWalkin(event: Event): void {
     event.preventDefault();
     const course = this.course();
@@ -593,7 +662,18 @@ export class Roster {
       return;
     }
 
-    const outcome = this.store.addTrial(course, role, name);
+    const phone = this.walkinPhone().trim();
+    const email = this.walkinEmail().trim();
+    if (!phone && !email) {
+      this.walkinError.set(this.t('walkin.needContact'));
+      return;
+    }
+    if (email && !looksLikeEmail(email)) {
+      this.walkinError.set(this.t('walkin.badEmail'));
+      return;
+    }
+
+    const outcome = this.store.addTrial(course, role, name, contactLine(phone, email));
     if (!outcome.ok) {
       this.walkinError.set(outcome.reason ?? this.t('walkin.error'));
       return;

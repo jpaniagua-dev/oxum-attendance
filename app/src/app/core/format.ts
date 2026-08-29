@@ -24,6 +24,29 @@ export function plural(count: number, one: string, many: string): string {
   return count > 1 ? many : one;
 }
 
+/**
+ * A trial student's contact details, as the school will read them in its own
+ * Commentaires column.
+ *
+ * Either half on its own is a usable answer — somebody may have a phone and no
+ * email, or the reverse — so a missing one leaves no dangling separator.
+ */
+export function contactLine(phone: string, email: string): string {
+  return [phone, email]
+    .map((part) => part.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/**
+ * Enough of an email check to catch a slip, and no more. This is typed
+ * standing up, on someone else's phone, with a class waiting: refusing a real
+ * address costs the school a lead, and there is nothing here to protect.
+ */
+export function looksLikeEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
+}
+
 /** A Date as the ISO day the rest of the app keys everything on. */
 export function isoOf(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');

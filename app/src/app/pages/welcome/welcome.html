@@ -1,0 +1,33 @@
+<header class="masthead">
+  <p class="eyebrow rule">{{ t('common.studio') }}</p>
+  <app-lang-switch />
+</header>
+
+<main>
+  <div class="lede">
+    <h1>{{ t('welcome.title') }}</h1>
+    <p class="note">{{ t('welcome.body') }}</p>
+  </div>
+
+  <!--
+    Two doors, told apart by the same pair of colours the roster uses for the
+    two halves of a room: the school's own amber and its blue.
+  -->
+  <div class="doors">
+    <button type="button" class="door leader" (click)="setup()">
+      <span class="door-head">
+        <h2>{{ t('welcome.setup') }}</h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+      </span>
+      <span class="note">{{ t('welcome.setupBody') }}</span>
+    </button>
+
+    <button type="button" class="door follower" (click)="demo()">
+      <span class="door-head">
+        <h2>{{ t('welcome.demo') }}</h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+      </span>
+      <span class="note">{{ t('welcome.demoBody') }}</span>
+    </button>
+  </div>
+</main>

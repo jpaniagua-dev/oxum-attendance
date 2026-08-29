@@ -133,6 +133,75 @@ test('a walk-in writes name and tick into the free row', () => {
   ]);
 });
 
+test('a walk-in carries its contact details into the comments column', () => {
+  const { script, writes, course } = withBook(dianaSheet());
+  const group = groupsOf(course())['leader:trial'];
+  const slot = group.freeSlots[0];
+
+  const results = plain(script.runOperations([{
+    kind: 'trial',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: slot.row,
+    nameColumn: group.nameColumn,
+    sessionColumn: group.sessionColumn,
+    commentColumn: group.commentColumn,
+    name: 'Camille B.',
+    text: '079 123 45 67 · camille@exemple.ch'
+  }]));
+
+  assert.equal(results[0].ok, true);
+  assert.equal(results[0].comment, '079 123 45 67 · camille@exemple.ch');
+  assert.deepEqual(writes, [
+    { row: slot.row, column: 3, value: 'Camille B.' },
+    { row: slot.row, column: 4, value: true },
+    { row: slot.row, column: group.commentColumn, value: '079 123 45 67 · camille@exemple.ch' }
+  ]);
+});
+
+/** The school's own column: an empty one is left as it was found. */
+test('a walk-in with no contact details leaves the comments column alone', () => {
+  const { script, writes, course } = withBook(dianaSheet());
+  const group = groupsOf(course())['leader:trial'];
+  const slot = group.freeSlots[0];
+
+  plain(script.runOperations([{
+    kind: 'trial',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: slot.row,
+    nameColumn: group.nameColumn,
+    sessionColumn: group.sessionColumn,
+    commentColumn: group.commentColumn,
+    name: 'Camille B.',
+    text: ''
+  }]));
+
+  assert.equal(writes.length, 2);
+});
+
+/** Nothing at all is written when the row turns out to be taken. */
+test('a refused walk-in writes no contact details either', () => {
+  const { script, writes, course } = withBook(dianaSheet());
+  const group = groupsOf(course())['leader:trial'];
+  const taken = group.students[0];
+
+  const results = plain(script.runOperations([{
+    kind: 'trial',
+    spreadsheetId: 'book-id',
+    sheetName: 'Feuille 1',
+    row: taken.row,
+    nameColumn: group.nameColumn,
+    sessionColumn: group.sessionColumn,
+    commentColumn: group.commentColumn,
+    name: 'Camille B.',
+    text: '079 123 45 67'
+  }]));
+
+  assert.equal(results[0].ok, false);
+  assert.equal(writes.length, 0);
+});
+
 test('a walk-in never overwrites a row someone else already took', () => {
   const { script, writes, course } = withBook(dianaSheet());
   const group = groupsOf(course())['leader:trial'];

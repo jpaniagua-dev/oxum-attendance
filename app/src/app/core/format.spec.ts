@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isoFromSessionKey } from './format';
+import { contactLine, isoFromSessionKey, looksLikeEmail } from './format';
 
 /**
  * The workbook dates its columns by day and month, and the app keys its own
@@ -37,5 +37,42 @@ describe('isoFromSessionKey', () => {
     expect(isoFromSessionKey('13-01', inSeason)).toBeNull();
     expect(isoFromSessionKey('mardi', inSeason)).toBeNull();
     expect(isoFromSessionKey('', inSeason)).toBeNull();
+  });
+});
+
+/**
+ * A trial student is a lead the school follows up afterwards, and this is the
+ * line it will read in its own Commentaires column.
+ */
+describe('contactLine', () => {
+  it('joins the two halves the way the rest of the app joins a pair of facts', () => {
+    expect(contactLine('079 123 45 67', 'camille@exemple.ch')).toBe(
+      '079 123 45 67 · camille@exemple.ch',
+    );
+  });
+
+  it('leaves no dangling separator when only one was given', () => {
+    expect(contactLine('079 123 45 67', '')).toBe('079 123 45 67');
+    expect(contactLine('', 'camille@exemple.ch')).toBe('camille@exemple.ch');
+    expect(contactLine('  ', ' ')).toBe('');
+  });
+
+  it('tidies what a phone keyboard produced', () => {
+    expect(contactLine('  079   123  45 67 ', '')).toBe('079 123 45 67');
+  });
+});
+
+describe('looksLikeEmail', () => {
+  it('accepts an address', () => {
+    expect(looksLikeEmail('camille@exemple.ch')).toBe(true);
+    expect(looksLikeEmail(' camille.b@sub.exemple.co.uk ')).toBe(true);
+  });
+
+  /** Enough to catch a slip. It is not here to police anybody's address. */
+  it('refuses what is plainly not one', () => {
+    expect(looksLikeEmail('camille')).toBe(false);
+    expect(looksLikeEmail('camille@exemple')).toBe(false);
+    expect(looksLikeEmail('camille @exemple.ch')).toBe(false);
+    expect(looksLikeEmail('')).toBe(false);
   });
 });

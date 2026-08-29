@@ -7,6 +7,9 @@ import { longDate } from '../../core/format';
 import { LangSwitch } from '../../ui/lang-switch';
 import { Course } from '../../core/models';
 
+/** Set once the app has walked itself into a lone class, per launch. */
+let entered = false;
+
 /**
  * Picks the class being taught right now.
  *
@@ -38,17 +41,19 @@ export class Courses {
 
   constructor() {
     if (!this.settings.configured()) {
-      void this.router.navigate(['/reglages']);
+      void this.router.navigate(['/bienvenue']);
     } else if (!this.store.courses().length) {
       void this.store.load();
     }
 
     effect(() => {
-      // With a single class there is nothing to choose: go straight in.
+      // With a single class there is nothing to choose: go straight in — but
+      // only on the way in. A teacher who has just given the code to come back
+      // here wants this list, and it is the only road to the settings.
       const only = this.courses();
-      if (only.length === 1 && !this.store.loading()) {
-        void this.router.navigate(['/cours', only[0].id]);
-      }
+      if (entered || only.length !== 1 || this.store.loading()) return;
+      entered = true;
+      void this.router.navigate(['/cours', only[0].id]);
     });
   }
 

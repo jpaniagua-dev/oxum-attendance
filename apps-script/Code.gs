@@ -643,11 +643,17 @@ function nameMismatch(sheet, op) {
 }
 
 /**
- * Writes a walk-in trial student into a free row, name and tick together.
+ * Writes a walk-in trial student into a free row: name, tick and how to reach
+ * them, all in one go.
  *
  * The row must still be empty: two devices in the same room can hand out the
  * same free slot, and overwriting whoever got there first would erase a real
  * student's name.
+ *
+ * The contact details ride along rather than following as a separate comment
+ * operation. A second operation would have to verify the name it had itself
+ * just written, and would fail on its own if the row had been taken in between
+ * — leaving the school a trial student it has no way to call back.
  */
 function writeTrial(sheet, op) {
   requireCell(op, 'sessionColumn');
@@ -665,7 +671,13 @@ function writeTrial(sheet, op) {
 
   sheet.getRange(op.row, op.nameColumn).setValue(name);
   sheet.getRange(op.row, op.sessionColumn).setValue(op.present !== false);
-  return { ok: true, row: op.row, name: name, added: true };
+
+  var contact = cleanText(op.text);
+  if (contact && op.commentColumn) {
+    sheet.getRange(op.row, op.commentColumn).setValue(contact);
+  }
+
+  return { ok: true, row: op.row, name: name, added: true, comment: contact };
 }
 
 function requireCell(op, targetColumn) {

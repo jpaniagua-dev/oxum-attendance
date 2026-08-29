@@ -1,0 +1,123 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: calc(1.1rem + env(safe-area-inset-top)) var(--gutter) 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--masthead);
+}
+
+/* The one flourish: a hairline of the brand amber leading the eyebrow. */
+.rule {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.rule::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1.15rem;
+  height: 2px;
+  background: var(--accent);
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 2rem var(--gutter) calc(2.5rem + env(safe-area-inset-bottom));
+}
+
+.lede,
+.doors {
+  width: 100%;
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+.lede {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.doors {
+  display: grid;
+  gap: var(--gap);
+}
+
+@media (min-width: 44rem) {
+  .doors {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/*
+ * Each door names its own colour, the way a roster column does: amber for the
+ * road into the studio, blue for the one that touches nothing.
+ */
+.door.leader {
+  --door: var(--leader);
+  --door-text: var(--leader-text);
+}
+
+.door.follower {
+  --door: var(--follower);
+  --door-text: var(--follower-text);
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.3rem 1.4rem;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--door);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.door:hover {
+  background: var(--surface-hi);
+  border-color: var(--door);
+  border-top-color: var(--door);
+}
+
+.door-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.door h2 {
+  font-size: var(--step-2);
+  color: var(--door-text);
+}
+
+.door svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--door-text);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

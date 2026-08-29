@@ -27,6 +27,14 @@ const FR = {
     "Ces présences n'ont pas pu être écrites, parce que la ligne n'est plus la même dans le Google Sheet. La liste vient d'être rechargée : il faut les recocher.",
   'conflict.ok': "J'ai compris",
 
+  'welcome.title': 'Prise de présence',
+  'welcome.body': "Cet appareil n'est pas encore relié au studio.",
+  'welcome.setup': 'Configurer un nouveau cours',
+  'welcome.setupBody':
+    "Coller l'URL du déploiement Apps Script et son jeton, puis choisir un code à quatre chiffres.",
+  'welcome.demo': 'Tester la démo',
+  'welcome.demoBody': "Une salle fictive, aux noms inventés. Aucun classeur n'est touché.",
+
   'courses.title': 'Quel cours ?',
   'courses.loading': 'Chargement…',
   'courses.students': '{n} élèves',
@@ -77,6 +85,13 @@ const FR = {
   'walkin.hint': "Ton prénom et l'initiale de ton nom suffisent.",
   'walkin.name': 'Nom',
   'walkin.namePlaceholder': 'Camille B.',
+  'walkin.phone': 'Téléphone',
+  'walkin.phonePlaceholder': '079 123 45 67',
+  'walkin.email': 'E-mail',
+  'walkin.emailPlaceholder': 'camille@exemple.ch',
+  'walkin.contactHint': "L'école te recontacte après le cours. L'un des deux suffit.",
+  'walkin.needContact': 'Il faut un téléphone ou un e-mail.',
+  'walkin.badEmail': "Cet e-mail n'a pas l'air valide.",
   'walkin.roleLegend': 'Je danse en',
   'walkin.places': '{n} places',
   'walkin.error': 'Il faut un nom et un rôle.',
@@ -93,6 +108,11 @@ const FR = {
 
   'settings.title': 'Réglages',
   'settings.lock': 'Verrouiller',
+
+  'leave.title': 'Quitter le cours',
+  'leave.body':
+    "La liste des cours mène aux réglages : le code est demandé avant de sortir de la classe.",
+  'leave.confirm': 'Quitter',
 
   'gate.title': 'Code à quatre chiffres',
   'gate.body':
@@ -192,6 +212,14 @@ const EN: Record<MessageKey, string> = {
     'These could not be written, because the row is no longer the same in the Google Sheet. The list has just been reloaded — they need ticking again.',
   'conflict.ok': 'Got it',
 
+  'welcome.title': 'Attendance',
+  'welcome.body': 'This device is not connected to the studio yet.',
+  'welcome.setup': 'Set up a new class',
+  'welcome.setupBody':
+    'Paste the Apps Script deployment URL and its token, then choose a four-digit code.',
+  'welcome.demo': 'Try the demo',
+  'welcome.demoBody': 'A made-up room with invented names. No workbook is touched.',
+
   'courses.title': 'Which class?',
   'courses.loading': 'Loading…',
   'courses.students': '{n} students',
@@ -242,6 +270,13 @@ const EN: Record<MessageKey, string> = {
   'walkin.hint': 'Your first name and the initial of your surname are enough.',
   'walkin.name': 'Name',
   'walkin.namePlaceholder': 'Camille B.',
+  'walkin.phone': 'Phone',
+  'walkin.phonePlaceholder': '079 123 45 67',
+  'walkin.email': 'Email',
+  'walkin.emailPlaceholder': 'camille@example.ch',
+  'walkin.contactHint': 'The school gets back to you after the class. Either one is enough.',
+  'walkin.needContact': 'A phone number or an email is needed.',
+  'walkin.badEmail': 'That email does not look right.',
   'walkin.roleLegend': 'I dance as',
   'walkin.places': '{n} places',
   'walkin.error': 'A name and a role are needed.',
@@ -258,6 +293,11 @@ const EN: Record<MessageKey, string> = {
 
   'settings.title': 'Settings',
   'settings.lock': 'Lock',
+
+  'leave.title': 'Leave the class',
+  'leave.body':
+    'The class list leads to the settings, so the code is asked before leaving the class.',
+  'leave.confirm': 'Leave',
 
   'gate.title': 'Four-digit code',
   'gate.body': 'Settings are protected because the device is passed around during class.',

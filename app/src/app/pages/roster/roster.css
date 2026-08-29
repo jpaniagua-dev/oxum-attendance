@@ -703,3 +703,20 @@ main.waiting-screen {
   color: var(--danger);
   font-size: 0.9rem;
 }
+
+/* Phone and email sit side by side: they are one answer, asked two ways. */
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+@media (max-width: 26rem) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.note.small {
+  font-size: 0.85rem;
+}

@@ -308,8 +308,17 @@ export class SessionStore {
    * The row is claimed locally straight away so a second walk-in on the same
    * device does not get handed the same one; the backend still refuses the
    * write if another device got there first.
+   *
+   * `contact` is how the school reaches them afterwards, and it travels inside
+   * the same operation as the name — see `writeTrial` in the backend for why it
+   * is not a comment of its own.
    */
-  addTrial(course: Course, role: Role, name: string): { ok: boolean; reason?: string } {
+  addTrial(
+    course: Course,
+    role: Role,
+    name: string,
+    contact = '',
+  ): { ok: boolean; reason?: string } {
     const group = course.groups.find((candidate) => candidate.key === `${role}:trial`);
     if (!group || group.sessionColumn === null) {
       return { ok: false, reason: this.i18n.t('walkin.noBlock') };
@@ -350,8 +359,10 @@ export class SessionStore {
       row: slot.row,
       nameColumn: group.nameColumn,
       sessionColumn: group.sessionColumn,
+      commentColumn: group.commentColumn,
       name,
       present: true,
+      text: contact,
       courseId: course.id,
       groupKey: group.key,
     });
