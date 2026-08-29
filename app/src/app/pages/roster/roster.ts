@@ -46,11 +46,25 @@ interface Entry {
   student: Student | null;
 }
 
-interface Section {
-  key: string;
+/** One run of names under a rule: expected, then arrived. */
+interface Block {
   label: string;
   present: boolean;
   entries: Entry[];
+}
+
+/** Half the room. Leaders on the left, followers on the right. */
+interface RoleColumn {
+  role: Role;
+  label: string;
+  size: number;
+  blocks: Block[];
+}
+
+/** One side of the arrivals gauge. */
+interface Side {
+  here: number;
+  total: number;
 }
 
 /**
@@ -127,37 +141,39 @@ export class Roster {
   protected readonly tally = this.store.tally;
 
   /**
-   * Four lists: here and expected, each split leader and follower. Empty ones
-   * are dropped, so a class with no enrolled leaders shows three.
+   * The room in two halves: leaders on the left, followers on the right.
+   *
+   * That is how the school's own workbook lays a class out, and it is the one
+   * thing a student knows about themselves before they know anything else — so
+   * it halves the list they have to read, and keeps both halves on screen at
+   * once instead of stacked a scroll apart. Enrolled, trial and assisting
+   * students share a column: someone hunting for their name cares which side
+   * they dance, not which category the school files them under.
+   *
+   * Inside a column, expected sits above arrived. The first is the task, the
+   * second is the record.
    */
-  protected readonly sections = computed<Section[]>(() => {
+  protected readonly columns = computed<RoleColumn[]>(() => {
     const course = this.course();
     if (!course) return [];
 
     const needle = fold(this.search());
-    const buckets = new Map<string, Entry[]>();
-    const push = (present: boolean, role: Role, entry: Entry) => {
-      const key = `${present ? 'present' : 'waiting'}:${role}`;
-      const bucket = buckets.get(key);
-      if (bucket) bucket.push(entry);
-      else buckets.set(key, [entry]);
-    };
+    const waiting: Record<Role, Entry[]> = { leader: [], follower: [] };
+    const present: Record<Role, Entry[]> = { leader: [], follower: [] };
 
     for (const group of course.groups) {
       for (const student of group.students) {
         if (needle && !fold(student.name).includes(needle)) continue;
-        push(
-          this.store.isPresent(course.id, group, student),
-          group.role,
-          this.entryOf(course, group, student),
-        );
+        const entry = this.entryOf(course, group, student);
+        const side = this.store.isPresent(course.id, group, student) ? present : waiting;
+        side[group.role].push(entry);
       }
     }
 
     // A walk-in is present by definition, and always a trial.
     for (const extra of this.store.extrasFor(course.id)) {
       if (needle && !fold(extra.name).includes(needle)) continue;
-      push(true, extra.role, {
+      present[extra.role].push({
         key: `extra#${extra.uid}`,
         name: extra.name,
         trial: true,
@@ -170,24 +186,71 @@ export class Roster {
       });
     }
 
-    // Expected first: it is the list being worked through, and the one a
-    // student is sent to. Present names are the record, not the task.
-    const order: { key: string; present: boolean; role: Role }[] = [
-      { key: 'waiting:leader', present: false, role: 'leader' },
-      { key: 'waiting:follower', present: false, role: 'follower' },
-      { key: 'present:leader', present: true, role: 'leader' },
-      { key: 'present:follower', present: true, role: 'follower' },
-    ];
-
-    return order
-      .map(({ key, present, role }) => ({
-        key,
-        present,
-        label: `${this.t(present ? 'roster.present' : 'roster.waiting')} — ${this.roleLabel(role)}`,
-        entries: (buckets.get(key) ?? []).sort(present ? byArrival : byRosterOrder),
-      }))
-      .filter((section) => section.entries.length > 0);
+    return (['leader', 'follower'] as Role[]).map((role) => {
+      const blocks: Block[] = [];
+      if (waiting[role].length) {
+        blocks.push({
+          label: this.t('roster.waiting'),
+          present: false,
+          entries: waiting[role].sort(byRosterOrder),
+        });
+      }
+      if (present[role].length) {
+        blocks.push({
+          label: this.t('roster.present'),
+          present: true,
+          entries: present[role].sort(byArrival),
+        });
+      }
+      return {
+        role,
+        label: this.roleLabel(role),
+        size: waiting[role].length + present[role].length,
+        blocks,
+      };
+    });
   });
+
+  /**
+   * Arrivals per role, ignoring the search field.
+   *
+   * One total says almost nothing about a partner dance: a class with every
+   * leader in the room and half the followers missing cannot be taught in
+   * pairs. The two sides are therefore counted apart and drawn facing each
+   * other, so the imbalance is a shape rather than a subtraction to do in your
+   * head while thirty people wait.
+   */
+  protected readonly balance = computed<Record<Role, Side>>(() => {
+    const tally: Record<Role, Side> = {
+      leader: { here: 0, total: 0 },
+      follower: { here: 0, total: 0 },
+    };
+    const course = this.course();
+    if (!course) return tally;
+
+    for (const group of course.groups) {
+      for (const student of group.students) {
+        tally[group.role].total++;
+        if (this.store.isPresent(course.id, group, student)) tally[group.role].here++;
+      }
+    }
+    for (const extra of this.store.extrasFor(course.id)) {
+      tally[extra.role].here++;
+      tally[extra.role].total++;
+    }
+    return tally;
+  });
+
+  /** Both wings share one scale, so the shorter side reads as the shorter side. */
+  private peak(): number {
+    const { leader, follower } = this.balance();
+    return Math.max(leader.total, follower.total, 1);
+  }
+
+  /** How far the solid part of a wing reaches: who is actually here. */
+  protected share(side: Side): number {
+    return Math.round((side.here / this.peak()) * 100);
+  }
 
   /**
    * The announced students nobody ticked, ignoring the search field: closing a
@@ -204,11 +267,13 @@ export class Roster {
     }));
   });
 
-  protected readonly nothingFound = computed(
-    () => this.search().length > 0 && !this.sections().length,
+  private readonly shown = computed(() =>
+    this.columns().reduce((total, column) => total + column.size, 0),
   );
 
-  protected readonly isEmpty = computed(() => !this.search() && !this.sections().length);
+  protected readonly nothingFound = computed(() => this.search().length > 0 && !this.shown());
+
+  protected readonly isEmpty = computed(() => !this.search() && !this.shown());
 
   /** The dates the workbooks name — the app never invents one. */
   protected readonly dateOptions = computed(() =>
@@ -262,14 +327,14 @@ export class Roster {
    * present one asks before removing. The device is handed around, and a
    * mis-tap must not quietly unmark someone standing right there.
    */
-  protected tap(section: Section, entry: Entry): void {
+  protected tap(present: boolean, entry: Entry): void {
     if (this.consumeLongPress()) return;
     if (!entry.group || !entry.student) return;
 
     const course = this.course();
     if (!course || !course.hasSession) return;
 
-    if (section.present) {
+    if (present) {
       this.untick.set({ group: entry.group, student: entry.student });
       return;
     }
@@ -552,10 +617,6 @@ export class Roster {
 
   protected roleLabel(role: Role): string {
     return this.t(role === 'leader' ? 'role.leaders' : 'role.followers');
-  }
-
-  protected presentWord(count: number): string {
-    return this.t(count > 1 ? 'roster.hereMany' : 'roster.hereOne');
   }
 
   protected pendingLabel(): string {

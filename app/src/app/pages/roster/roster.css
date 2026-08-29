@@ -23,6 +23,18 @@
 }
 
 /*
+ * Phone first, but the app is also read on a laptop while a workbook is open
+ * beside it. Past a comfortable measure the two columns stop being two columns
+ * and become two distant lists, so the whole screen keeps one width.
+ */
+.masthead > *,
+main > * {
+  width: 100%;
+  max-width: 62rem;
+  margin-inline: auto;
+}
+
+/*
  * Wraps rather than squeezes: with a full-size language control the row no
  * longer fits beside a long class name on a phone, and a truncated class name
  * is worse than a second line.
@@ -60,7 +72,7 @@ app-lang-switch {
   width: 42px;
   height: 42px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 999px;
   background: transparent;
   color: var(--muted);
 }
@@ -121,9 +133,9 @@ app-lang-switch {
 
 .panel-date select {
   max-width: 100%;
-  padding: 0.6rem 0.8rem;
+  padding: 0.6rem 0.9rem;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 999px;
   background: var(--surface-hi);
   color: var(--text);
   font: inherit;
@@ -143,34 +155,114 @@ app-lang-switch {
   margin: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   The arrivals gauge — the one loud thing on the screen
+
+   Leaders and followers counted apart and drawn facing each other, because a
+   class that cannot be paired up is the problem a teacher is actually watching
+   for. The wings share one scale, so a shorter roster reads as a shorter wing
+   rather than a fuller one; the ghost behind each wing is how far that side
+   could reach if everybody came.
+   --------------------------------------------------------------------------- */
+
 .meta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
 }
 
-.tally {
-  display: inline-flex;
+.balance {
+  flex: 1 1 15rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  column-gap: 1.1rem;
+  row-gap: 0.35rem;
+}
+
+.side-count {
+  display: flex;
   align-items: baseline;
-  gap: 0.35rem;
-  color: var(--muted);
+  gap: 0.3rem;
+  min-width: 0;
 }
 
-.tally strong {
+/* Label and count stay one group: they gather at the pin, not at the edges. */
+.side-count .eyebrow {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--role-text);
+}
+
+.side-count strong {
   font-family: var(--display);
   font-size: var(--step-2);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--accent-text);
+  line-height: 1;
+  color: var(--text);
 }
 
-.slash {
+.side-count .of {
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+
+/* The left side is set against the pin, the right side away from it. */
+.side-count.leader {
+  justify-content: flex-end;
+}
+
+.rail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 2px 1fr;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.wing {
+  position: relative;
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--rail);
+  overflow: hidden;
+}
+
+.wing i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: block;
+  border-radius: 999px;
+  transition: width 380ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.wing.leader i {
+  right: 0;
+}
+
+.wing.follower i {
+  left: 0;
+}
+
+.wing .fill {
+  background: var(--role);
+}
+
+.pin {
+  height: 13px;
+  border-radius: 999px;
+  background: var(--line);
 }
 
 .pill {
-  padding: 0.3rem 0.7rem;
+  padding: 0.3rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
@@ -197,7 +289,7 @@ app-lang-switch {
 
 .search > svg {
   position: absolute;
-  left: 0.95rem;
+  left: 1.05rem;
   width: 19px;
   height: 19px;
   fill: none;
@@ -211,7 +303,7 @@ app-lang-switch {
   width: 100%;
   padding: 0.9rem 3rem;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -236,7 +328,7 @@ app-lang-switch {
   width: 36px;
   height: 36px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 999px;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -252,15 +344,15 @@ app-lang-switch {
 }
 
 /* ---------------------------------------------------------------------------
-   Roster
+   The floor
    --------------------------------------------------------------------------- */
 
 main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
-  padding: 1.2rem var(--edge) calc(2.5rem + env(safe-area-inset-bottom));
+  gap: 1.1rem;
+  padding: 1.1rem var(--edge) calc(2.5rem + env(safe-area-inset-bottom));
 }
 
 main.waiting-screen {
@@ -269,43 +361,124 @@ main.waiting-screen {
   justify-content: center;
 }
 
-.group-head {
+/*
+ * Two columns at every width, phone included. Splitting the room is the whole
+ * point: a student reads one side of it, never the room. Names are short by
+ * convention here — a first name and an initial — so they take the narrow
+ * measure without breaking.
+ */
+.floor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 0 clamp(0.6rem, 0.3rem + 1.5vw, 1.6rem);
+}
+
+/* Each column names its own colour once; everything under it inherits. */
+.side.leader {
+  --role: var(--leader);
+  --role-text: var(--leader-text);
+  --role-soft: var(--leader-soft);
+  --role-line: var(--leader-line);
+}
+
+.side.follower {
+  --role: var(--follower);
+  --role-text: var(--follower-text);
+  --role-soft: var(--follower-soft);
+  --role-line: var(--follower-line);
+}
+
+.side-count.leader {
+  --role: var(--leader);
+  --role-text: var(--leader-text);
+}
+
+.side-count.follower {
+  --role: var(--follower);
+  --role-text: var(--follower-text);
+}
+
+.wing.leader {
+  --role: var(--leader);
+}
+
+.wing.follower {
+  --role: var(--follower);
+}
+
+.side {
+  min-width: 0;
+}
+
+.side-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.7rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--line);
+  gap: 0.5rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid var(--role);
+}
+
+.side-head .eyebrow {
+  color: var(--role-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .count {
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--faint);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: var(--gap);
+/* A hairline with a word on it: cheaper than a heading, and it marks the one
+   boundary in a column that carries meaning. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.9rem 0 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
+
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.side-empty {
+  margin-top: 0.9rem;
+  color: var(--faint);
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------------------------
+   A name
+   --------------------------------------------------------------------------- */
 
 /*
- * A card is a container, not a button: the main area marks presence and a small
- * one opens the note. Nesting a button inside a button is invalid HTML, and the
- * two actions genuinely need separate targets.
+ * The name is the interface. Everything else on the card is either true or
+ * absent: a tick when they are here, a badge when the school files them as a
+ * trial, a dot when a note exists. Nothing is drawn to say what could be.
  */
 .name {
   position: relative;
   display: flex;
-  align-items: stretch;
+  margin-bottom: 0.5rem;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-left: 3px solid transparent;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--text);
-  overflow: hidden;
-  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  transition: background-color 140ms ease, border-color 140ms ease;
 }
 
 .pick {
@@ -313,22 +486,21 @@ main.waiting-screen {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-height: 74px;
-  padding: 0.85rem 1rem;
+  gap: 0.5rem;
+  min-height: 56px;
+  padding: 0.7rem 0.8rem;
   border: 0;
+  border-radius: inherit;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: var(--step-1);
-  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: background-color 140ms ease, transform 120ms ease;
 }
 
 .pick:hover:not(:disabled) {
-  background: var(--surface-hi);
+  background: var(--press);
 }
 
 .pick:active:not(:disabled) {
@@ -339,43 +511,47 @@ main.waiting-screen {
   cursor: default;
 }
 
-.label {
+.who {
   flex: 1;
   min-width: 0;
-  overflow-wrap: break-word;
-}
-
-/*
- * The only thing a card says beyond the name, and it stays quiet about it: a
- * faint marker under the name rather than a label competing with it. Out of
- * flow so it lands in the same spot on every card it appears on, aligned with
- * the name's own left edge.
- *
- * `.tagged` reserves the room: the badge is out of flow, so without the extra
- * height it would sit on top of a name that wrapped.
- */
-.name.tagged .pick {
-  min-height: 92px;
-  padding-bottom: 1.7rem;
-}
-
-.label .tags {
-  position: absolute;
-  left: 1rem;
-  bottom: 0.55rem;
   display: flex;
+  flex-direction: column;
   gap: 0.3rem;
 }
 
-.label small {
-  padding: 0.1rem 0.45rem;
+.label {
+  font-family: var(--display);
+  font-size: clamp(0.95rem, 0.86rem + 0.45vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.tags small {
+  padding: 0.05rem 0.4rem;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  opacity: 0.45;
+  color: var(--faint);
+}
+
+/*
+ * Louder than the trial badge, and deliberately so: this one is a claim the
+ * teacher is being asked to check, not a note about who the student is.
+ */
+.tags small.ann {
+  color: var(--role-text);
+  border-color: var(--role-line);
 }
 
 /*
@@ -386,64 +562,55 @@ main.waiting-screen {
 .name.noted::after {
   content: '';
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 7px;
-  height: 7px;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--accent-text);
+  background: var(--role-text);
 }
 
-.name.here.noted::after {
-  background: var(--present-ink);
+/*
+ * Being here is the role's own colour arriving on the card: a tinted ground, a
+ * solid edge, a tick, and the name in full weight. Four cues, only one of them
+ * colour.
+ */
+.name.here {
+  background: var(--role-soft);
+  border-color: var(--role-line);
+  border-left-color: var(--role);
 }
 
-/* The tick box carries the state; colour alone never does. */
-.box {
+.name.here .label {
+  font-weight: 700;
+}
+
+.tick {
   flex: none;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--line);
-  border-radius: 9px;
-  transition: inherit;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--role);
 }
 
-.box svg {
-  width: 18px;
-  height: 18px;
+.tick svg {
+  width: 15px;
+  height: 15px;
   fill: none;
-  stroke: var(--present-ink);
-  stroke-width: 3;
+  stroke: #1e1e1e;
+  stroke-width: 3.4;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
-}
-
-.name.here {
-  background: var(--present);
-  border-color: var(--present-line);
-  color: var(--present-ink);
-}
-
-.name.here .pick {
-  font-weight: 600;
-}
-
-.name.here .pick:hover:not(:disabled),
-.name.here .box {
-  border-color: var(--present-ink);
-}
-
-.name.here .box svg {
-  animation: draw 220ms ease forwards;
+  animation: draw 240ms ease forwards;
 }
 
 /*
  * The receipt for a tap, now that nothing interrupts the screen to give one:
- * the card that just moved holds a ring for a moment at the top of the page.
+ * the card that just moved holds a ring for a moment.
  */
 .name.just {
   animation: settle 1800ms ease-out;
@@ -452,7 +619,7 @@ main.waiting-screen {
 @keyframes settle {
   0%,
   60% {
-    box-shadow: 0 0 0 3px var(--present-line);
+    box-shadow: 0 0 0 3px var(--role);
   }
   100% {
     box-shadow: 0 0 0 3px transparent;
@@ -463,15 +630,6 @@ main.waiting-screen {
   to {
     stroke-dashoffset: 0;
   }
-}
-
-/*
- * Louder than the trial badge, and deliberately so: this one is a claim the
- * teacher is being asked to check, not a note about who the student is.
- */
-.label small.ann {
-  opacity: 0.9;
-  color: var(--accent-text);
 }
 
 .empty {
@@ -530,17 +688,16 @@ main.waiting-screen {
 .roles {
   display: flex;
   gap: var(--gap);
-  margin: 0.4rem 0 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
 
 .roles legend {
-  padding: 0;
-  margin-bottom: 0.4rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  padding: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -549,39 +706,30 @@ main.waiting-screen {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 0.15rem;
-  min-height: 64px;
+  padding: 0.8rem 1rem;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 14px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
+  text-align: left;
   cursor: pointer;
-  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 .role small {
+  font-weight: 400;
+  font-size: 0.8rem;
   color: var(--muted);
-  font-size: 0.75rem;
 }
 
 .role.chosen {
   border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-}
-
-.role.chosen small {
-  color: var(--accent-ink);
-  opacity: 0.75;
+  background: var(--accent-soft);
 }
 
 .field-error {
-  margin-top: 0.5rem;
   color: var(--danger);
   font-size: 0.9rem;
 }

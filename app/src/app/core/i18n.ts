@@ -51,8 +51,7 @@ const FR = {
   'roster.clear': 'Effacer',
   'roster.present': 'Présents',
   'roster.waiting': 'Attendus',
-  'roster.hereOne': 'présent',
-  'roster.hereMany': 'présents',
+  'roster.sideEmpty': 'Personne de ce côté',
   'roster.noColumn':
     "Aucune colonne ne correspond à aujourd'hui dans le classeur. Ajoute la date dans le Google Sheet, puis recharge.",
   'roster.columns': 'Colonnes présentes : {list}.',
@@ -223,8 +222,7 @@ const EN: Record<MessageKey, string> = {
   'roster.clear': 'Clear',
   'roster.present': 'Here',
   'roster.waiting': 'Expected',
-  'roster.hereOne': 'here',
-  'roster.hereMany': 'here',
+  'roster.sideEmpty': 'Nobody on this side',
   'roster.noColumn':
     "No column matches today's date in the workbook. Add the date to the Google Sheet, then reload.",
   'roster.columns': 'Columns present: {list}.',

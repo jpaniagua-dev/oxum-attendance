@@ -18,6 +18,15 @@
   font-size: var(--step-2);
 }
 
+/* One measure across the app: see the note in the roster's stylesheet. */
+.masthead > *,
+main > * {
+  width: 100%;
+  max-width: 62rem;
+  margin-inline: auto;
+}
+
+
 .icon-btn {
   flex: none;
   display: grid;
@@ -25,7 +34,7 @@
   width: 42px;
   height: 42px;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 999px;
   color: var(--muted);
 }
 

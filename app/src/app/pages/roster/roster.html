@@ -71,12 +71,34 @@
       </div>
     }
 
+    <!--
+      Arrivals per role, facing each other. A partner dance cannot be taught out
+      of one number: what the teacher needs to see is whether the two sides
+      match, and the shape says it before the digits do.
+    -->
     <div class="meta">
-      <span class="tally">
-        <strong>{{ tally().present }}</strong>
-        <span class="slash">/ {{ tally().total }}</span>
-        {{ presentWord(tally().present) }}
-      </span>
+      <div class="balance">
+        <p class="side-count leader">
+          <span class="eyebrow">{{ roleLabel('leader') }}</span>
+          <strong>{{ balance().leader.here }}</strong>
+          <span class="of">/ {{ balance().leader.total }}</span>
+        </p>
+        <p class="side-count follower">
+          <span class="eyebrow">{{ roleLabel('follower') }}</span>
+          <strong>{{ balance().follower.here }}</strong>
+          <span class="of">/ {{ balance().follower.total }}</span>
+        </p>
+        <div class="rail" aria-hidden="true">
+          <span class="wing leader">
+            <i class="fill" [style.width.%]="share(balance().leader)"></i>
+          </span>
+          <span class="pin"></span>
+          <span class="wing follower">
+            <i class="fill" [style.width.%]="share(balance().follower)"></i>
+          </span>
+        </div>
+      </div>
+
       <button
         type="button"
         class="pill"
@@ -137,56 +159,77 @@
       <div class="message">{{ t('common.stale') }}</div>
     }
 
-    <!-- Expected first: the list being worked through, then the record. -->
-    @for (section of sections(); track section.key) {
-      <section>
-        <div class="group-head">
-          <p class="eyebrow">{{ section.label }}</p>
-          <span class="count">{{ section.entries.length }}</span>
-        </div>
-        <div class="grid">
-          @for (entry of section.entries; track entry.key) {
-            <div
-              class="name"
-              [class.here]="section.present"
-              [class.just]="highlighted() === entry.key"
-              [class.noted]="entry.noted"
-              [class.tagged]="entry.trial || entry.announced"
-            >
-              <button
-                type="button"
-                class="pick"
-                [disabled]="!entry.group || !current.hasSession"
-                (click)="tap(section, entry)"
-                (pointerdown)="onPressStart($event, entry)"
-                (pointermove)="onPressMove($event)"
-                (pointerup)="onPressEnd()"
-                (pointercancel)="onPressEnd()"
-                (pointerleave)="onPressEnd()"
-                (contextmenu)="$event.preventDefault()"
+    <!--
+      The two halves of the room, side by side the way the workbook holds them.
+      A student reads one column, not a list of twenty-seven.
+    -->
+    <div class="floor">
+      @for (column of columns(); track column.role) {
+        <section
+          class="side"
+          [class.leader]="column.role === 'leader'"
+          [class.follower]="column.role === 'follower'"
+        >
+          <div class="side-head">
+            <p class="eyebrow">{{ column.label }}</p>
+            <span class="count">{{ column.size }}</span>
+          </div>
+
+          @for (block of column.blocks; track block.present) {
+            <p class="divider"><span>{{ block.label }}</span></p>
+
+            @for (entry of block.entries; track entry.key) {
+              <div
+                class="name"
+                [class.here]="block.present"
+                [class.just]="highlighted() === entry.key"
+                [class.noted]="entry.noted"
               >
-                <span class="label">
-                  {{ entry.name }}
-                  @if (entry.trial || entry.announced) {
-                    <span class="tags">
-                      @if (entry.announced) {
-                        <small class="ann">{{ t('roster.announced') }}</small>
-                      }
-                      @if (entry.trial) {
-                        <small>{{ t('roster.trial') }}</small>
-                      }
+                <button
+                  type="button"
+                  class="pick"
+                  [disabled]="!entry.group || !current.hasSession"
+                  (click)="tap(block.present, entry)"
+                  (pointerdown)="onPressStart($event, entry)"
+                  (pointermove)="onPressMove($event)"
+                  (pointerup)="onPressEnd()"
+                  (pointercancel)="onPressEnd()"
+                  (pointerleave)="onPressEnd()"
+                  (contextmenu)="$event.preventDefault()"
+                >
+                  <span class="who">
+                    <span class="label">{{ entry.name }}</span>
+                    @if (entry.trial || entry.announced) {
+                      <span class="tags">
+                        @if (entry.announced) {
+                          <small class="ann">{{ t('roster.announced') }}</small>
+                        }
+                        @if (entry.trial) {
+                          <small>{{ t('roster.trial') }}</small>
+                        }
+                      </span>
+                    }
+                  </span>
+
+                  <!-- A tick that only exists when it is true. An empty box on
+                       every card was twenty-seven pieces of furniture claiming
+                       to be the target, when the target is the whole card. -->
+                  @if (block.present) {
+                    <span class="tick" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
                     </span>
                   }
-                </span>
-                <span class="box">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                </span>
-              </button>
-            </div>
+                </button>
+              </div>
+            }
           }
-        </div>
-      </section>
-    }
+
+          @if (!column.blocks.length) {
+            <p class="side-empty">{{ t('roster.sideEmpty') }}</p>
+          }
+        </section>
+      }
+    </div>
 
     @if (nothingFound()) {
       <div class="empty">

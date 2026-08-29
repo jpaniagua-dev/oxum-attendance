@@ -1,9 +1,16 @@
 /*
  * Attendance — global tokens and shared controls.
  *
- * Palette and both typefaces come from the school's own identity: the amber of
- * the "DANCE STUDIO" wordmark as the single accent, on a warm neutral ground.
- * Nothing else is allowed to be loud.
+ * Everything here is taken from the school's own site rather than invented
+ * around it. Two facts drive the whole system:
+ *
+ * - The school has **two** colours, not one. The amber of the wordmark is the
+ *   one this app already used; the sky blue that carries every call to action
+ *   on the site was missing entirely. They are used here as the two halves of
+ *   a partner dance — amber for leaders, blue for followers — which is the one
+ *   division a student has to read before anything else.
+ * - The ground is a cool near-white, not a warm cream. The site is white paper
+ *   and photographic black; a beige app beside it reads as another brand.
  *
  * Three theme states, not two. `:root` carries the complete light palette and
  * is what an un-stamped document gets; the media query flips it for a device
@@ -12,47 +19,52 @@
  * Components only ever read tokens, never a literal colour — a colour defined
  * solely inside one of those blocks would be missing in the other states.
  *
- * The amber that fills a button is not the amber that can be read as text on a
- * pale ground, hence the split between `--accent` and `--accent-text`.
+ * A brand colour that fills a shape is never the one that can be read as text:
+ * amber on white is 1.6:1. Hence `--leader` and `--leader-text`, its follower
+ * twin, and the same split on `--accent`.
  */
 
 :root {
-  --ink: #faf7f2;
+  --ink: #f4f5f7;
   --surface: #ffffff;
-  --surface-hi: #f2ede4;
-  --line: #e3dbcf;
-  --text: #1a1613;
-  --muted: #6d6459;
-  --faint: #a79c8e;
+  --surface-hi: #eceef2;
+  --line: #e2e5ea;
+  --text: #1e1e1e;
+  --muted: #585858;
+  --faint: #6e6e6e;
 
+  /* The two halves of the room. */
+  --leader: #fbc11f;
+  --leader-text: #8a6400;
+  --leader-soft: rgba(251, 193, 31, 0.16);
+  --leader-line: rgba(251, 193, 31, 0.55);
+
+  --follower: #6ec1e4;
+  --follower-text: #1c6f8d;
+  --follower-soft: rgba(110, 193, 228, 0.18);
+  --follower-line: rgba(110, 193, 228, 0.6);
+
+  /* Actions borrow the wordmark's amber, the way the site's own buttons do. */
   --accent: #fbc11f;
   --accent-strong: #e8ae0c;
-  --accent-ink: #17130a;
-  --accent-text: #8f6805;
-  --accent-soft: rgba(251, 193, 31, 0.2);
+  --accent-ink: #1e1e1e;
+  --accent-text: #8a6400;
+  --accent-soft: rgba(251, 193, 31, 0.18);
 
   --danger: #b3392c;
   --danger-soft: rgba(179, 57, 44, 0.1);
   --good: #2f7d4a;
   --good-soft: rgba(47, 125, 74, 0.1);
 
-  /*
-   * Being present is a state, not an action, so it gets its own green and
-   * leaves the brand amber to the buttons. On a pale ground the fill has to be
-   * solid and dark: a translucent green light enough to look soft would put
-   * white text at roughly 1.2:1, which is no text at all.
-   */
-  --press: rgba(0, 0, 0, 0.08);
+  --rail: #dfe3e9;
+  --press: rgba(0, 0, 0, 0.06);
   --hairline: rgba(0, 0, 0, 0.18);
-  --present: #17812f;
-  --present-line: #17812f;
-  --present-ink: #ffffff;
 
-  --scrim: rgba(250, 247, 242, 0.94);
-  --scrim-strong: rgba(250, 247, 242, 0.96);
-  --scrim-solid: rgba(250, 247, 242, 0.98);
+  --scrim: rgba(244, 245, 247, 0.94);
+  --scrim-strong: rgba(244, 245, 247, 0.96);
+  --scrim-solid: rgba(244, 245, 247, 0.98);
 
-  --masthead: linear-gradient(180deg, #ffffff 0%, var(--ink) 100%);
+  --masthead: #ffffff;
 
   --step-0: 1rem;
   --step-1: 1.125rem;
@@ -70,72 +82,79 @@
 /* A device set to dark, unless the in-app switch asked for light. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --ink: #0e0d0c;
-    --surface: #191614;
-    --surface-hi: #221e1b;
-    --line: #322c27;
-    --text: #f6f1e9;
-    --muted: #a69c91;
-    --faint: #6d645c;
+    --ink: #0b0a10;
+    --surface: #16151c;
+    --surface-hi: #1e1d26;
+    --line: #2c2b36;
+    --text: #f2f2f5;
+    --muted: #a3a2ad;
+    --faint: #8b8a96;
 
-    --accent: #fbc11f;
+    --leader-text: #fbc11f;
+    --leader-soft: rgba(251, 193, 31, 0.12);
+    --leader-line: rgba(251, 193, 31, 0.45);
+
+    --follower-text: #6ec1e4;
+    --follower-soft: rgba(110, 193, 228, 0.14);
+    --follower-line: rgba(110, 193, 228, 0.5);
+
     --accent-strong: #d9a20d;
-    --accent-ink: #17130a;
     --accent-text: #fbc11f;
-    --accent-soft: rgba(251, 193, 31, 0.09);
+    --accent-soft: rgba(251, 193, 31, 0.1);
 
     --danger: #e4695b;
-    --danger-soft: rgba(228, 105, 91, 0.1);
+    --danger-soft: rgba(228, 105, 91, 0.12);
     --good: #7ec98f;
     --good-soft: rgba(126, 201, 143, 0.1);
 
-    /* Translucent over the near-black ground: reads as a deep forest green. */
-    --press: rgba(255, 255, 255, 0.09);
+    --rail: #2c2b36;
+    --press: rgba(255, 255, 255, 0.08);
     --hairline: rgba(255, 255, 255, 0.24);
-  --present: #1ffb4947;
-    --present-line: #1ffb4970;
-    --present-ink: #f6fff8;
 
-    --scrim: rgba(14, 13, 12, 0.94);
-    --scrim-strong: rgba(14, 13, 12, 0.95);
-    --scrim-solid: rgba(14, 13, 12, 0.97);
+    --scrim: rgba(11, 10, 16, 0.94);
+    --scrim-strong: rgba(11, 10, 16, 0.95);
+    --scrim-solid: rgba(11, 10, 16, 0.97);
 
-    --masthead: linear-gradient(180deg, #191614 0%, var(--ink) 100%);
+    --masthead: #16151c;
   }
 }
 
 /* The in-app switch, which must win over the device in both directions. */
 :root[data-theme='dark'] {
-  --press: rgba(255, 255, 255, 0.09);
-  --hairline: rgba(255, 255, 255, 0.24);
-  --ink: #0e0d0c;
-  --surface: #191614;
-  --surface-hi: #221e1b;
-  --line: #322c27;
-  --text: #f6f1e9;
-  --muted: #a69c91;
-  --faint: #6d645c;
+  --ink: #0b0a10;
+  --surface: #16151c;
+  --surface-hi: #1e1d26;
+  --line: #2c2b36;
+  --text: #f2f2f5;
+  --muted: #a3a2ad;
+  --faint: #8b8a96;
 
-  --accent: #fbc11f;
+  --leader-text: #fbc11f;
+  --leader-soft: rgba(251, 193, 31, 0.12);
+  --leader-line: rgba(251, 193, 31, 0.45);
+
+  --follower-text: #6ec1e4;
+  --follower-soft: rgba(110, 193, 228, 0.14);
+  --follower-line: rgba(110, 193, 228, 0.5);
+
   --accent-strong: #d9a20d;
-  --accent-ink: #17130a;
   --accent-text: #fbc11f;
-  --accent-soft: rgba(251, 193, 31, 0.09);
+  --accent-soft: rgba(251, 193, 31, 0.1);
 
   --danger: #e4695b;
-  --danger-soft: rgba(228, 105, 91, 0.1);
+  --danger-soft: rgba(228, 105, 91, 0.12);
   --good: #7ec98f;
   --good-soft: rgba(126, 201, 143, 0.1);
 
-  --present: #1ffb4947;
-  --present-line: #1ffb4970;
-  --present-ink: #f6fff8;
+  --rail: #2c2b36;
+  --press: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.24);
 
-  --scrim: rgba(14, 13, 12, 0.94);
-  --scrim-strong: rgba(14, 13, 12, 0.95);
-  --scrim-solid: rgba(14, 13, 12, 0.97);
+  --scrim: rgba(11, 10, 16, 0.94);
+  --scrim-strong: rgba(11, 10, 16, 0.95);
+  --scrim-solid: rgba(11, 10, 16, 0.97);
 
-  --masthead: linear-gradient(180deg, #191614 0%, var(--ink) 100%);
+  --masthead: #16151c;
 }
 
 *,
@@ -193,9 +212,9 @@ p {
 }
 
 .eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -207,6 +226,10 @@ p {
 
 /* ---------------------------------------------------------------------------
    Controls
+
+   The school's own call to action is a fully round amber pill. Keeping that
+   shape here also does a job: a pill is never a name, and a card is never a
+   button.
    --------------------------------------------------------------------------- */
 
 .btn {
@@ -214,9 +237,9 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.8rem 1.3rem;
+  padding: 0.8rem 1.4rem;
   border: 1px solid transparent;
-  border-radius: 11px;
+  border-radius: 999px;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -247,16 +270,16 @@ p {
 
 .btn-danger {
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--danger);
   color: var(--danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  border-color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .btn-small {
-  padding: 0.45rem 0.8rem;
+  padding: 0.45rem 0.9rem;
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -266,7 +289,7 @@ p {
   cursor: not-allowed;
 }
 
-:where(button, input, a, [tabindex]):focus-visible {
+:where(button, input, a, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 3px;
 }
@@ -282,18 +305,19 @@ p {
 }
 
 .field > span {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.field input {
+.field input,
+.field textarea {
   width: 100%;
   padding: 0.85rem 1rem;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -303,18 +327,8 @@ p {
 }
 
 .field textarea {
-  width: 100%;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--step-1);
   line-height: 1.45;
   resize: vertical;
-  -webkit-user-select: text;
-  user-select: text;
 }
 
 .field input::placeholder,
@@ -343,7 +357,7 @@ p {
   padding: 0.85rem 1rem;
   border: 1px solid var(--accent-text);
   border-left-width: 3px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--accent-soft);
   font-size: 0.95rem;
 }
@@ -378,6 +392,10 @@ p {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
 }
 
 .actions {
@@ -396,7 +414,7 @@ p {
   gap: 0.35rem;
   padding: 0.3rem;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--ink);
 }
 
@@ -404,7 +422,7 @@ p {
   flex: 1;
   padding: 0.6rem 0.5rem;
   border: 0;
-  border-radius: 9px;
+  border-radius: 999px;
   background: transparent;
   color: var(--muted);
   font: inherit;
