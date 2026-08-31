@@ -1,13 +1,22 @@
 @if (course(); as current) {
   <header class="masthead">
     <!--
-      The whole heading of this screen: which class, and which evening of it.
-      Everything a teacher needs is on the class list now, behind the code, so
-      nothing else competes with the search field below.
+      The whole heading of this screen: whose room this is, which class, and
+      which evening of it. Everything a teacher needs is on the class list now,
+      behind the code, so nothing else competes with the search field below.
     -->
     <div class="course">
-      <h1>{{ current.title }}</h1>
-      <p class="note date">{{ date() }}</p>
+      <img
+        class="mark"
+        src="logo.webp"
+        [attr.alt]="t('common.studio')"
+        width="960"
+        height="580"
+      />
+      <div class="titles">
+        <h1>{{ current.title }}</h1>
+        <p class="note date">{{ date() }}</p>
+      </div>
     </div>
 
     <div class="find">
@@ -74,9 +83,18 @@
           [class.leader]="column.role === 'leader'"
           [class.follower]="column.role === 'follower'"
         >
+          <!--
+            Arrivals over roster size, per side. A partner dance cannot be read
+            out of one number: what a teacher watches for is whether the two
+            halves match. The search field does not move these — they count the
+            room, not what is on screen.
+          -->
           <div class="side-head">
             <p class="eyebrow">{{ column.label }}</p>
-            <span class="count">{{ column.size }}</span>
+            <span class="count">
+              <strong>{{ presence()[column.role].here }}</strong>
+              <span class="of">/ {{ presence()[column.role].total }}</span>
+            </span>
           </div>
 
           @for (block of column.blocks; track block.present) {

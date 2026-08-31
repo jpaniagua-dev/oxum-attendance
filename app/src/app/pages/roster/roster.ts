@@ -53,6 +53,12 @@ interface Block {
   entries: Entry[];
 }
 
+/** How full one half of the room is: who came, out of who is on the roster. */
+interface Side {
+  here: number;
+  total: number;
+}
+
 /** Half the room. Leaders on the left, followers on the right. */
 interface RoleColumn {
   role: Role;
@@ -132,7 +138,6 @@ export class Roster {
 
   protected readonly course = this.store.course;
   protected readonly date = computed(() => longDate(this.store.date(), this.i18n.locale()));
-  protected readonly tally = this.store.tally;
 
   /**
    * The room in two halves: leaders on the left, followers on the right.
@@ -203,6 +208,35 @@ export class Roster {
         blocks,
       };
     });
+  });
+
+  /**
+   * Arrivals and roster size per role, ignoring the search field.
+   *
+   * `columns` is filtered as the teacher types, which is right for the lists
+   * and wrong for a count: a class does not empty because somebody searched
+   * for a name. These are counted from the course itself.
+   */
+  protected readonly presence = computed<Record<Role, Side>>(() => {
+    const tally: Record<Role, Side> = {
+      leader: { here: 0, total: 0 },
+      follower: { here: 0, total: 0 },
+    };
+    const course = this.course();
+    if (!course) return tally;
+
+    for (const group of course.groups) {
+      for (const student of group.students) {
+        tally[group.role].total++;
+        if (this.store.isPresent(course.id, group, student)) tally[group.role].here++;
+      }
+    }
+    // A walk-in is present by definition, and joins both halves of the ratio.
+    for (const extra of this.store.extrasFor(course.id)) {
+      tally[extra.role].here++;
+      tally[extra.role].total++;
+    }
+    return tally;
   });
 
   private readonly shown = computed(() =>

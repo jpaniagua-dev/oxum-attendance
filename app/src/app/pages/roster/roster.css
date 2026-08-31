@@ -38,6 +38,28 @@ main > * {
    in each column's head, a thumb's length below.
    --------------------------------------------------------------------------- */
 
+/* The mark beside the two lines it introduces, not above them: this header
+   is two rows tall and must stay that way. */
+.course {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* See the note on `.mark` in the class list's stylesheet. */
+.mark {
+  flex: none;
+  width: auto;
+  height: 42px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--mark-plate);
+}
+
+.titles {
+  min-width: 0;
+}
+
 .course h1 {
   font-size: clamp(1.15rem, 0.95rem + 1vw, 1.5rem);
   overflow-wrap: break-word;
@@ -201,10 +223,22 @@ main.waiting-screen {
   white-space: nowrap;
 }
 
+/* Arrivals loud, roster size quiet: the first is the number that moves. */
 .count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
   color: var(--faint);
+}
+
+.count strong {
+  font-family: var(--display);
+  font-size: var(--step-1);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--role-text);
 }
 
 /* A hairline with a word on it: cheaper than a heading, and it marks the one
