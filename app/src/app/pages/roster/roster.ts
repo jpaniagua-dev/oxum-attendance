@@ -125,19 +125,6 @@ export class Roster {
   protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
   protected readonly noteText = signal('');
 
-  /**
-   * The teacher panel: the date and the end-of-class correction, behind one
-   * control instead of on the screen a student is handed. It is closed by any
-   * tap in the list below, for the same reason the settings screen re-locks on
-   * every exit — the phone changes hands mid-class.
-   */
-  protected readonly panelOpen = signal(false);
-
-  protected readonly closing = signal(false);
-  protected readonly closePicked = signal<ReadonlySet<string>>(new Set<string>());
-  protected readonly closePin = signal('');
-  protected readonly closeError = signal<string | null>(null);
-
   private highlightTimer: ReturnType<typeof setTimeout> | null = null;
   private pressTimer: ReturnType<typeof setTimeout> | null = null;
   private pressOrigin: { x: number; y: number } | null = null;
@@ -218,21 +205,6 @@ export class Roster {
     });
   });
 
-  /**
-   * The announced students nobody ticked, ignoring the search field: closing a
-   * session is about the whole class, not about what is on screen right now.
-   */
-  protected readonly noShows = computed(() => {
-    const course = this.course();
-    if (!course) return [];
-    return this.store.noShows(course).map(({ group, student }) => ({
-      key: `${group.key}#${student.row}`,
-      name: student.name,
-      group,
-      student,
-    }));
-  });
-
   private readonly shown = computed(() =>
     this.columns().reduce((total, column) => total + column.size, 0),
   );
@@ -240,11 +212,6 @@ export class Roster {
   protected readonly nothingFound = computed(() => this.search().length > 0 && !this.shown());
 
   protected readonly isEmpty = computed(() => !this.search() && !this.shown());
-
-  /** The dates the workbooks name — the app never invents one. */
-  protected readonly dateOptions = computed(() =>
-    this.store.sessionDates().map((iso) => ({ iso, label: longDate(iso, this.i18n.locale()) })),
-  );
 
   constructor() {
     // Only the route id is a dependency: reading the course list untracked
@@ -255,7 +222,6 @@ export class Roster {
       if (!id) return;
       untracked(() => {
         this.store.select(id);
-        this.panelOpen.set(false);
         if (!this.store.courses().length && this.settings.configured()) {
           void this.store.load();
         }
@@ -425,10 +391,6 @@ export class Roster {
   }
 
   // -------------------------------------------------------------------------
-  // Closing the session
-  // -------------------------------------------------------------------------
-
-  // -------------------------------------------------------------------------
   // Leaving the class
   // -------------------------------------------------------------------------
 
@@ -437,7 +399,6 @@ export class Roster {
       void this.router.navigate(['/']);
       return;
     }
-    this.closePanel();
     this.leavePin.set('');
     this.leaveError.set(null);
     this.leaving.set(true);
@@ -465,95 +426,10 @@ export class Roster {
   }
 
   // -------------------------------------------------------------------------
-  // The teacher panel
-  // -------------------------------------------------------------------------
-
-  protected togglePanel(): void {
-    this.panelOpen.update((open) => !open);
-  }
-
-  protected closePanel(): void {
-    if (this.panelOpen()) this.panelOpen.set(false);
-  }
-
-  /**
-   * Reads another date's session.
-   *
-   * A class is rarely closed on the spot, so the previous evening has to be
-   * reachable. The panel stays open: picking a date is usually the first half
-   * of correcting it. A date this app never saw being taught captured no
-   * announcements, so it offers nothing to close — see `captureAnnounced`.
-   */
-  protected onDate(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
-    this.store.date.set(value);
-    void this.store.load();
-  }
-
-  /**
-   * Opens the correction sheet, with every no-show ticked.
-   *
-   * They start ticked because that is the common case — the teacher glances at
-   * the names and confirms. What matters is that the names are *there*: this
-   * device cannot know that a colleague ticked somebody in on the other phone,
-   * so the only thing standing between that student and a false absence is a
-   * human reading their name. A yes/no dialog would not have given them one.
-   */
-  protected openClosure(): void {
-    this.panelOpen.set(false);
-    this.closePicked.set(new Set(this.noShows().map((entry) => entry.key)));
-    this.closePin.set('');
-    this.closeError.set(null);
-    this.closing.set(true);
-  }
-
-  protected cancelClosure(): void {
-    this.closing.set(false);
-    this.closePin.set('');
-  }
-
-  protected togglePicked(key: string): void {
-    this.closePicked.update((current) => {
-      const next = new Set(current);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
-  }
-
-  protected isPicked(key: string): boolean {
-    return this.closePicked().has(key);
-  }
-
-  protected onClosePin(event: Event): void {
-    this.closePin.set((event.target as HTMLInputElement).value);
-    this.closeError.set(null);
-  }
-
-  protected confirmClosure(event: Event): void {
-    event.preventDefault();
-    const course = this.course();
-    if (!course) return;
-
-    // `matches` rather than `unlock`: the same four digits, but closing a
-    // session must not leave the settings screen open behind it.
-    if (this.settings.hasPin() && !this.settings.matches(this.closePin())) {
-      this.closeError.set(this.t('gate.wrong'));
-      return;
-    }
-
-    const chosen = this.noShows().filter((entry) => this.closePicked().has(entry.key));
-    if (chosen.length) this.store.closeSession(course, chosen);
-    this.closing.set(false);
-    this.closePin.set('');
-  }
-
-  // -------------------------------------------------------------------------
   // Search
   // -------------------------------------------------------------------------
 
   protected onSearch(event: Event): void {
-    this.closePanel();
     this.search.set((event.target as HTMLInputElement).value);
   }
 
@@ -644,17 +520,6 @@ export class Roster {
   protected roleLabel(role: Role): string {
     return this.t(role === 'leader' ? 'role.leaders' : 'role.followers');
   }
-
-  protected pendingLabel(): string {
-    const n = this.noShows().length;
-    return this.t(n > 1 ? 'teacher.pendingMany' : 'teacher.pendingOne', { n });
-  }
-
-  protected closeConfirmLabel(): string {
-    const n = this.closePicked().size;
-    return this.t(n > 1 ? 'close.confirmMany' : 'close.confirmOne', { n });
-  }
-
 }
 
 /** Most recently arrived first, so the person who just tapped is on top. */

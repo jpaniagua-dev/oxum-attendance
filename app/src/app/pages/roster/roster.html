@@ -1,106 +1,49 @@
 @if (course(); as current) {
   <header class="masthead">
-    <div class="top">
-      <button
-        type="button"
-        class="icon-btn"
-        [attr.aria-label]="t('roster.changeCourse')"
-        (click)="askLeave()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
-      </button>
-      <app-lang-switch />
-      <!--
-        Everything only a teacher needs lives behind this one control: the date
-        and the end-of-class correction. The phone spends the hour in students'
-        hands, and a button they can reach is a button they can press.
-      -->
-      <button
-        type="button"
-        class="icon-btn dots"
-        [class.on]="panelOpen()"
-        [attr.aria-expanded]="panelOpen()"
-        [attr.aria-label]="t('teacher.open')"
-        (click)="togglePanel()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="5" r="1.7" />
-          <circle cx="12" cy="12" r="1.7" />
-          <circle cx="12" cy="19" r="1.7" />
-        </svg>
-      </button>
-    </div>
-
-    @if (panelOpen()) {
-      <div class="teacher-panel">
-        <label class="panel-date">
-          <span class="eyebrow">{{ t('session.dateLabel') }}</span>
-          <select (change)="onDate($event)">
-            @for (option of dateOptions(); track option.iso) {
-              <option [value]="option.iso" [selected]="option.iso === store.date()">
-                {{ option.label }}
-              </option>
-            }
-          </select>
-        </label>
-
-        <!--
-          No announcement left hanging means nothing to correct, and the absence
-          of this button is itself the answer: a date this app never saw being
-          taught cannot be closed at all.
-        -->
-        @if (current.hasSession && noShows().length) {
-          <p class="pending">{{ pendingLabel() }}</p>
-          <button type="button" class="btn btn-danger" (click)="openClosure()">
-            {{ t('teacher.close') }}
-          </button>
-        } @else {
-          <p class="note">{{ t('teacher.nothingToClose') }}</p>
-        }
-      </div>
-    }
-
     <!--
-      The class and the date it is taken for. They used to sit in the row
-      above, wrapping onto a second line beside the controls; on a line of
-      their own they cost nothing and hand the gauge's height to the roster.
+      The whole heading of this screen: which class, and which evening of it.
+      Everything a teacher needs is on the class list now, behind the code, so
+      nothing else competes with the search field below.
     -->
     <div class="course">
       <h1>{{ current.title }}</h1>
       <p class="note date">{{ date() }}</p>
     </div>
 
-    <label class="search">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" />
-      </svg>
-      <input
-        type="search"
-        inputmode="search"
-        enterkeyhint="search"
-        autocomplete="off"
-        [placeholder]="t('roster.search')"
-        [attr.aria-label]="t('roster.searchLabel')"
-        [value]="search()"
-        (input)="onSearch($event)"
-      />
-      @if (search()) {
-        <button
-          type="button"
-          class="clear"
-          (click)="clearSearch()"
-          [attr.aria-label]="t('roster.clear')"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      }
-    </label>
+    <div class="find">
+      <label class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          inputmode="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          [placeholder]="t('roster.search')"
+          [attr.aria-label]="t('roster.searchLabel')"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+        @if (search()) {
+          <button
+            type="button"
+            class="clear"
+            (click)="clearSearch()"
+            [attr.aria-label]="t('roster.clear')"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      </label>
+      <app-lang-switch />
+    </div>
   </header>
 
-  <main (pointerdown)="closePanel()">
+  <main>
     @if (!current.hasSession) {
       <div class="message error">
         {{ t('roster.noColumn') }}
@@ -204,6 +147,12 @@
       </div>
     }
 
+    <!--
+      Two doors, side by side, each labelled with who it is for. The way back
+      to the class list used to be an arrow in the top corner, where a student
+      scrolling had already met it; naming its audience is a better lock than
+      hiding it, and the code still stands behind it.
+    -->
     <div class="footer-actions">
       <button
         type="button"
@@ -212,6 +161,9 @@
         (click)="openWalkin()"
       >
         {{ t('roster.walkin') }}
+      </button>
+      <button type="button" class="btn btn-ghost" (click)="askLeave()">
+        {{ t('roster.teachers') }}
       </button>
     </div>
   </main>
@@ -267,58 +219,6 @@
     </div>
   }
 
-  @if (closing()) {
-    <div class="stage" role="alertdialog" aria-labelledby="close-title">
-      <form class="stage-inner" (submit)="confirmClosure($event)">
-        <h1 id="close-title">{{ t('close.title') }}</h1>
-        <p class="note">{{ t('close.body', { date: date() }) }}</p>
-
-        <ul class="no-shows">
-          @for (entry of noShows(); track entry.key) {
-            <li>
-              <label>
-                <input
-                  type="checkbox"
-                  [checked]="isPicked(entry.key)"
-                  (change)="togglePicked(entry.key)"
-                />
-                <span>{{ entry.name }}</span>
-              </label>
-            </li>
-          }
-        </ul>
-
-        @if (settings.hasPin()) {
-          <label class="field">
-            <span>{{ t('gate.code') }}</span>
-            <input
-              type="password"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="8"
-              enterkeyhint="done"
-              [value]="closePin()"
-              (input)="onClosePin($event)"
-            />
-          </label>
-        }
-
-        @if (closeError(); as error) {
-          <p class="field-error">{{ error }}</p>
-        }
-
-        <div class="actions">
-          <button type="button" class="btn btn-ghost" (click)="cancelClosure()">
-            {{ t('common.cancel') }}
-          </button>
-          <button type="submit" class="btn btn-danger" [disabled]="!closePicked().size">
-            {{ closeConfirmLabel() }}
-          </button>
-        </div>
-      </form>
-    </div>
-  }
-
   @if (noteFor(); as target) {
     <div class="stage" role="dialog" aria-labelledby="note-title">
       <form class="stage-inner" (submit)="saveNote($event)">
@@ -348,6 +248,18 @@
   @if (walkinOpen()) {
     <div class="stage" role="dialog" aria-labelledby="walkin-title">
       <form class="stage-inner" (submit)="submitWalkin($event)">
+        <!--
+          The one screen of this app a visitor reads before they have danced a
+          step. The roster itself stays unbranded — it belongs to the student
+          holding the phone — but this is the school introducing itself.
+        -->
+        <img
+          class="mark"
+          src="logo.webp"
+          [attr.alt]="t('common.studio')"
+          width="960"
+          height="580"
+        />
         <h1 id="walkin-title">{{ t('walkin.title') }}</h1>
         <p class="note">{{ t('walkin.hint') }}</p>
 

@@ -29,138 +29,44 @@ main > * {
   margin-inline: auto;
 }
 
-/* Controls only, one row: the class name sits on its own line below. */
-.top {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem 0.75rem;
-}
-
-app-lang-switch {
-  margin-left: auto;
-}
-
 /* ---------------------------------------------------------------------------
    The class line
 
-   The name of the course being taken and the date it is taken for, which is
-   all the heading a student needs. It replaced the arrivals gauge, whose two
-   counters and rail ate a third of the masthead on a phone; the per-side
-   totals it carried are still in each column's head, a thumb's length below.
+   Which class, and which evening of it — the whole heading of this screen.
+   It took the place of the arrivals gauge, whose two counters and rail ate a
+   third of the masthead on a phone; the per-side totals it carried are still
+   in each column's head, a thumb's length below.
    --------------------------------------------------------------------------- */
-
-/*
- * One line, and it wraps rather than truncates: a class name cut short is
- * worse than a second line, and the date belongs beside it either way.
- */
-.course {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.7rem;
-}
 
 .course h1 {
   font-size: clamp(1.15rem, 0.95rem + 1vw, 1.5rem);
   overflow-wrap: break-word;
 }
 
-/* Pushed to the far edge, where the eye is not looking for a name. */
+/* Under the name, not beside it: on a phone the two together overran the row
+   and the date is the smaller of the two questions being answered. */
 .date {
-  margin-left: auto;
   text-transform: capitalize;
   font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.icon-btn {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-}
-
-.icon-btn:hover {
-  color: var(--text);
-  border-color: var(--muted);
-}
-
-.icon-btn svg {
-  width: 19px;
-  height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Three dots, so the one control a student must not press reads as a menu. */
-.dots svg {
-  fill: currentColor;
-  stroke: none;
-}
-
-.icon-btn.on {
-  color: var(--text);
-  border-color: var(--accent-text);
 }
 
 /* ---------------------------------------------------------------------------
-   The teacher panel
+   The find row
+
+   The search field and the language switch, together. They are the two things
+   a student reaches for and the only two controls this screen offers them, so
+   they share a row instead of each claiming one.
    --------------------------------------------------------------------------- */
 
-/*
- * The date and the end-of-class correction, out of sight until asked for.
- * They used to sit under the roster, where a student scrolling to the bottom
- * found them. Being inside the masthead means it also disappears the moment
- * anything below is touched.
- */
-.teacher-panel {
+.find {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--gap);
-  padding: 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  align-items: center;
+  gap: 0.6rem;
 }
 
-.panel-date {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.find .search {
+  flex: 1 1 auto;
   min-width: 0;
-}
-
-.panel-date select {
-  max-width: 100%;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface-hi);
-  color: var(--text);
-  font: inherit;
-  text-transform: capitalize;
-}
-
-/* How many corrections the button is about, before it is pressed. */
-.teacher-panel .pending {
-  flex: 1 1 100%;
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.teacher-panel .note {
-  flex: 1 1 100%;
-  margin: 0;
 }
 
 /* ---------------------------------------------------------------------------
@@ -503,6 +409,7 @@ main.waiting-screen {
   padding: 1rem 0;
 }
 
+/* Two doors sharing the row, neither of them the obvious one to press. */
 .footer-actions {
   display: flex;
   flex-wrap: wrap;
@@ -510,43 +417,20 @@ main.waiting-screen {
   align-items: center;
 }
 
-/* ---------------------------------------------------------------------------
-   Closing a session
-   --------------------------------------------------------------------------- */
-
-/*
- * A list of names with a box each, not a yes/no prompt. The teacher is the only
- * thing that can catch a student ticked in from the other phone, and they can
- * only catch it if they read the name and can leave it out.
- */
-.no-shows {
-  max-height: 40vh;
-  margin: 0.6rem 0 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
+.footer-actions .btn {
+  flex: 1 1 12rem;
 }
 
-.no-shows label {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 48px;
-  padding: 0 0.3rem;
-  border-bottom: 1px solid var(--line);
-  cursor: pointer;
+/* The school's mark, on the dialog a first-time visitor fills in. */
+.stage-inner .mark {
+  align-self: center;
+  width: min(13rem, 60%);
+  height: auto;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius);
+  background: var(--mark-plate);
 }
 
-.no-shows li:last-child label {
-  border-bottom: 0;
-}
-
-.no-shows input {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  accent-color: var(--danger);
-}
 
 /* ---------------------------------------------------------------------------
    Walk-in form
@@ -594,11 +478,6 @@ main.waiting-screen {
 .role.chosen {
   border-color: var(--accent);
   background: var(--accent-soft);
-}
-
-.field-error {
-  color: var(--danger);
-  font-size: 0.9rem;
 }
 
 /* Phone and email sit side by side: they are one answer, asked two ways. */

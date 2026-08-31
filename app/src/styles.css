@@ -349,6 +349,12 @@ p {
   color: var(--faint);
 }
 
+/* Said under the field it is about, on every screen that asks for the code. */
+.field-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
 .field small {
   color: var(--muted);
   font-size: 0.85rem;

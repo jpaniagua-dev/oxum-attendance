@@ -19,7 +19,22 @@
 
 <main>
   <h1>{{ t('courses.title') }}</h1>
-  <p class="note date">{{ date() }}</p>
+
+  <!--
+    A class is rarely closed on the spot, so the previous evening has to be
+    reachable. The dates are the workbook's own — the app never invents one,
+    and refuses to write where the school has opened no column.
+  -->
+  <label class="session-date">
+    <span class="eyebrow">{{ t('session.dateLabel') }}</span>
+    <select (change)="onDate($event)">
+      @for (option of dateOptions(); track option.iso) {
+        <option [value]="option.iso" [selected]="option.iso === store.date()">
+          {{ option.label }}
+        </option>
+      }
+    </select>
+  </label>
 
   @if (store.loading()) {
     <p class="note">{{ t('courses.loading') }}</p>
@@ -41,16 +56,30 @@
 
   <div class="list">
     @for (course of courses(); track course.id) {
-      <a class="course" [routerLink]="['/cours', course.id]">
-        <strong>{{ course.title }}</strong>
-        <span>
-          @if (course.hasSession) {
-            {{ t('courses.students', { n: countOf(course) }) }} · {{ course.workbookLabel }}
-          } @else {
-            {{ t('courses.noSession') }}
-          }
-        </span>
-      </a>
+      <div class="row">
+        <a class="course" [routerLink]="['/cours', course.id]">
+          <strong>{{ course.title }}</strong>
+          <span>
+            @if (course.hasSession) {
+              {{ t('courses.students', { n: countOf(course) }) }} · {{ course.workbookLabel }}
+            } @else {
+              {{ t('courses.noSession') }}
+            }
+          </span>
+        </a>
+
+        <!--
+          No announcement left hanging means nothing to correct, and the absence
+          of this button is itself the answer: a date this app never saw being
+          taught captured no announcements, so it offers nothing to close.
+        -->
+        @if (pending().get(course.id); as n) {
+          <button type="button" class="close-btn" (click)="openClosure(course)">
+            <span>{{ t('teacher.close') }}</span>
+            <small>{{ pendingLabel(n) }}</small>
+          </button>
+        }
+      </div>
     }
   </div>
 
@@ -62,3 +91,55 @@
     <div class="message error">{{ t('courses.unreachable', { name: course.title }) }}</div>
   }
 </main>
+
+@if (closing(); as target) {
+  <div class="stage" role="alertdialog" aria-labelledby="close-title">
+    <form class="stage-inner" (submit)="confirmClosure($event)">
+      <h1 id="close-title">{{ t('close.title') }}</h1>
+      <p class="note">{{ target.title }} — {{ t('close.body', { date: date() }) }}</p>
+
+      <ul class="no-shows">
+        @for (entry of noShows(); track entry.key) {
+          <li>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="isPicked(entry.key)"
+                (change)="togglePicked(entry.key)"
+              />
+              <span>{{ entry.name }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+
+      @if (settings.hasPin()) {
+        <label class="field">
+          <span>{{ t('gate.code') }}</span>
+          <input
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="8"
+            enterkeyhint="done"
+            [value]="closePin()"
+            (input)="onClosePin($event)"
+          />
+        </label>
+      }
+
+      @if (closeError(); as error) {
+        <p class="field-error">{{ error }}</p>
+      }
+
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" (click)="cancelClosure()">
+          {{ t('common.cancel') }}
+        </button>
+        <button type="submit" class="btn btn-danger" [disabled]="!closePicked().size">
+          {{ closeConfirmLabel() }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

@@ -46,13 +46,11 @@ const FR = {
 
   'session.dateLabel': 'Séance du',
 
-  'teacher.open': 'Réglages de la séance',
   'teacher.close': 'Terminer la classe',
   'teacher.pendingOne': '1 annoncé non pointé',
   'teacher.pendingMany': '{n} annoncés non pointés',
-  'teacher.nothingToClose': 'Rien à corriger pour cette séance.',
 
-  'roster.changeCourse': 'Changer de cours',
+  'roster.teachers': 'Espace prof',
   'roster.search': 'Cherche ton nom…',
   'roster.searchLabel': 'Chercher un nom',
   'roster.clear': 'Effacer',
@@ -227,13 +225,11 @@ const EN: Record<MessageKey, string> = {
 
   'session.dateLabel': 'Session of',
 
-  'teacher.open': 'Session controls',
   'teacher.close': 'End the class',
   'teacher.pendingOne': '1 announced, not marked in',
   'teacher.pendingMany': '{n} announced, not marked in',
-  'teacher.nothingToClose': 'Nothing to correct for this session.',
 
-  'roster.changeCourse': 'Change class',
+  'roster.teachers': 'For teachers',
   'roster.search': 'Find your name…',
   'roster.searchLabel': 'Search for a name',
   'roster.clear': 'Clear',
