@@ -29,35 +29,48 @@ main > * {
   margin-inline: auto;
 }
 
-/*
- * Wraps rather than squeezes: with a full-size language control the row no
- * longer fits beside a long class name on a phone, and a truncated class name
- * is worse than a second line.
- */
+/* Controls only, one row: the class name sits on its own line below. */
 .top {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem 0.75rem;
-}
-
-.titles {
-  flex: 1 1 11rem;
-  min-width: 0;
 }
 
 app-lang-switch {
   margin-left: auto;
 }
 
-.titles h1 {
+/* ---------------------------------------------------------------------------
+   The class line
+
+   The name of the course being taken and the date it is taken for, which is
+   all the heading a student needs. It replaced the arrivals gauge, whose two
+   counters and rail ate a third of the masthead on a phone; the per-side
+   totals it carried are still in each column's head, a thumb's length below.
+   --------------------------------------------------------------------------- */
+
+/*
+ * One line, and it wraps rather than truncates: a class name cut short is
+ * worse than a second line, and the date belongs beside it either way.
+ */
+.course {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.7rem;
+}
+
+.course h1 {
   font-size: clamp(1.15rem, 0.95rem + 1vw, 1.5rem);
   overflow-wrap: break-word;
 }
 
+/* Pushed to the far edge, where the eye is not looking for a name. */
 .date {
+  margin-left: auto;
   text-transform: capitalize;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .icon-btn {
@@ -148,104 +161,6 @@ app-lang-switch {
 .teacher-panel .note {
   flex: 1 1 100%;
   margin: 0;
-}
-
-/* ---------------------------------------------------------------------------
-   The arrivals gauge — the one loud thing on the screen
-
-   Leaders and followers counted apart and drawn facing each other, because a
-   class that cannot be paired up is the problem a teacher is actually watching
-   for. The wings share one scale, so a shorter roster reads as a shorter wing
-   rather than a fuller one; the ghost behind each wing is how far that side
-   could reach if everybody came.
-   --------------------------------------------------------------------------- */
-
-.balance {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: end;
-  column-gap: 1.1rem;
-  row-gap: 0.35rem;
-}
-
-.side-count {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-/* Label and count stay one group: they gather at the pin, not at the edges. */
-.side-count .eyebrow {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--role-text);
-}
-
-.side-count strong {
-  font-family: var(--display);
-  font-size: var(--step-2);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  color: var(--text);
-}
-
-.side-count .of {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--faint);
-}
-
-/* The left side is set against the pin, the right side away from it. */
-.side-count.leader {
-  justify-content: flex-end;
-}
-
-.rail {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 1fr 2px 1fr;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.wing {
-  position: relative;
-  display: block;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--rail);
-  overflow: hidden;
-}
-
-.wing i {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  display: block;
-  border-radius: 999px;
-  transition: width 380ms cubic-bezier(0.2, 0.8, 0.3, 1);
-}
-
-.wing.leader i {
-  right: 0;
-}
-
-.wing.follower i {
-  left: 0;
-}
-
-.wing .fill {
-  background: var(--role);
-}
-
-.pin {
-  height: 13px;
-  border-radius: 999px;
-  background: var(--line);
 }
 
 /* ---------------------------------------------------------------------------
@@ -358,24 +273,6 @@ main.waiting-screen {
   --role-text: var(--follower-text);
   --role-soft: var(--follower-soft);
   --role-line: var(--follower-line);
-}
-
-.side-count.leader {
-  --role: var(--leader);
-  --role-text: var(--leader-text);
-}
-
-.side-count.follower {
-  --role: var(--follower);
-  --role-text: var(--follower-text);
-}
-
-.wing.leader {
-  --role: var(--leader);
-}
-
-.wing.follower {
-  --role: var(--follower);
 }
 
 .side {

@@ -9,10 +9,6 @@
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
       </button>
-      <div class="titles">
-        <h1>{{ current.title }}</h1>
-        <p class="note date">{{ date() }}</p>
-      </div>
       <app-lang-switch />
       <!--
         Everything only a teacher needs lives behind this one control: the date
@@ -65,30 +61,13 @@
     }
 
     <!--
-      Arrivals per role, facing each other. A partner dance cannot be taught out
-      of one number: what the teacher needs to see is whether the two sides
-      match, and the shape says it before the digits do.
+      The class and the date it is taken for. They used to sit in the row
+      above, wrapping onto a second line beside the controls; on a line of
+      their own they cost nothing and hand the gauge's height to the roster.
     -->
-    <div class="balance">
-        <p class="side-count leader">
-          <span class="eyebrow">{{ roleLabel('leader') }}</span>
-          <strong>{{ balance().leader.here }}</strong>
-          <span class="of">/ {{ balance().leader.total }}</span>
-        </p>
-        <p class="side-count follower">
-          <span class="eyebrow">{{ roleLabel('follower') }}</span>
-          <strong>{{ balance().follower.here }}</strong>
-          <span class="of">/ {{ balance().follower.total }}</span>
-        </p>
-        <div class="rail" aria-hidden="true">
-          <span class="wing leader">
-            <i class="fill" [style.width.%]="share(balance().leader)"></i>
-          </span>
-          <span class="pin"></span>
-          <span class="wing follower">
-            <i class="fill" [style.width.%]="share(balance().follower)"></i>
-          </span>
-        </div>
+    <div class="course">
+      <h1>{{ current.title }}</h1>
+      <p class="note date">{{ date() }}</p>
     </div>
 
     <label class="search">

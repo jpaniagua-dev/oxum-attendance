@@ -61,12 +61,6 @@ interface RoleColumn {
   blocks: Block[];
 }
 
-/** One side of the arrivals gauge. */
-interface Side {
-  here: number;
-  total: number;
-}
-
 /**
  * The screen a student is handed on arrival.
  *
@@ -79,10 +73,10 @@ interface Side {
  *
  * There is no confirmation dialog and nothing moves the page under the reader:
  * the tapped card simply leaves the expected list for the present one further
- * down, and the count in the sticky header goes up. A card that stays on screen
- * also holds a highlight for a moment. Scrolling the page for them was worse
- * than the problem it solved — the screen jumped under a finger that was about
- * to hand the phone over.
+ * down, and the count at the head of its column goes up. A card that stays on
+ * screen also holds a highlight for a moment. Scrolling the page for them was
+ * worse than the problem it solved — the screen jumped under a finger that was
+ * about to hand the phone over.
  */
 @Component({
   selector: 'app-roster',
@@ -223,47 +217,6 @@ export class Roster {
       };
     });
   });
-
-  /**
-   * Arrivals per role, ignoring the search field.
-   *
-   * One total says almost nothing about a partner dance: a class with every
-   * leader in the room and half the followers missing cannot be taught in
-   * pairs. The two sides are therefore counted apart and drawn facing each
-   * other, so the imbalance is a shape rather than a subtraction to do in your
-   * head while thirty people wait.
-   */
-  protected readonly balance = computed<Record<Role, Side>>(() => {
-    const tally: Record<Role, Side> = {
-      leader: { here: 0, total: 0 },
-      follower: { here: 0, total: 0 },
-    };
-    const course = this.course();
-    if (!course) return tally;
-
-    for (const group of course.groups) {
-      for (const student of group.students) {
-        tally[group.role].total++;
-        if (this.store.isPresent(course.id, group, student)) tally[group.role].here++;
-      }
-    }
-    for (const extra of this.store.extrasFor(course.id)) {
-      tally[extra.role].here++;
-      tally[extra.role].total++;
-    }
-    return tally;
-  });
-
-  /** Both wings share one scale, so the shorter side reads as the shorter side. */
-  private peak(): number {
-    const { leader, follower } = this.balance();
-    return Math.max(leader.total, follower.total, 1);
-  }
-
-  /** How far the solid part of a wing reaches: who is actually here. */
-  protected share(side: Side): number {
-    return Math.round((side.here / this.peak()) * 100);
-  }
 
   /**
    * The announced students nobody ticked, ignoring the search field: closing a
