@@ -106,12 +106,11 @@ const FR = {
 
   'settings.title': 'Réglages',
 
-  'leave.title': 'Quitter le cours',
-  'leave.body':
-    "La liste des cours mène aux réglages : le code est demandé avant de sortir de la classe.",
-  'leave.confirm': 'Quitter',
-
+  'gate.title': 'Espace prof',
+  'gate.body':
+    'La liste des cours mène aux réglages du studio. Entre le code à quatre chiffres pour y accéder.',
   'gate.code': 'Code',
+  'gate.open': 'Entrer',
   'gate.wrong': 'Code incorrect.',
 
   'conn.title': 'Connexion au studio',
@@ -285,12 +284,11 @@ const EN: Record<MessageKey, string> = {
 
   'settings.title': 'Settings',
 
-  'leave.title': 'Leave the class',
-  'leave.body':
-    'The class list leads to the settings, so the code is asked before leaving the class.',
-  'leave.confirm': 'Leave',
-
+  'gate.title': 'For teachers',
+  'gate.body':
+    'The class list leads to the studio settings. Enter the four-digit code to reach it.',
   'gate.code': 'Code',
+  'gate.open': 'Enter',
   'gate.wrong': 'Wrong code.',
 
   'conn.title': 'Studio connection',

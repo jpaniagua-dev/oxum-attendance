@@ -6,6 +6,7 @@ import { DEMO_ENDPOINT } from '../../core/demo';
 import { I18nService } from '../../core/i18n';
 import { SessionStore, messageOf } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
+import { CodeGate } from '../../ui/code-gate';
 import { ThemeService, ThemeChoice } from '../../core/theme.service';
 import { Course, Workbook } from '../../core/models';
 
@@ -24,7 +25,7 @@ const THEMES: ThemeChoice[] = ['system', 'light', 'dark'];
  */
 @Component({
   selector: 'app-settings',
-  imports: [RouterLink],
+  imports: [RouterLink, CodeGate],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

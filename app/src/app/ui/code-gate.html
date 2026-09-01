@@ -1,0 +1,32 @@
+<form class="gate" (submit)="submit($event)">
+  <img
+    class="mark"
+    src="logo.webp"
+    [attr.alt]="t('common.studio')"
+    width="960"
+    height="580"
+  />
+
+  <h1>{{ t('gate.title') }}</h1>
+  <p class="note">{{ t('gate.body') }}</p>
+
+  <label class="field">
+    <span>{{ t('gate.code') }}</span>
+    <input
+      type="password"
+      inputmode="numeric"
+      autocomplete="off"
+      maxlength="8"
+      enterkeyhint="go"
+      placeholder="••••"
+      [value]="pin()"
+      (input)="onPin($event)"
+    />
+  </label>
+
+  @if (error(); as message) {
+    <p class="field-error">{{ message }}</p>
+  }
+
+  <button type="submit" class="btn btn-primary">{{ t('gate.open') }}</button>
+</form>

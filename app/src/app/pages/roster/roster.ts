@@ -118,16 +118,6 @@ export class Roster {
   protected readonly walkinRole = signal<Role | null>(null);
   protected readonly walkinError = signal<string | null>(null);
 
-  /**
-   * Leaving this screen is guarded, because the class list is one tap from the
-   * settings and the phone spends the hour in students' hands. The same four
-   * digits as everywhere else, and — like closing a session — checked rather
-   * than spent: getting out of a class must not hand out the settings screen.
-   */
-  protected readonly leaving = signal(false);
-  protected readonly leavePin = signal('');
-  protected readonly leaveError = signal<string | null>(null);
-
   protected readonly noteFor = signal<{ group: Group; student: Student } | null>(null);
   protected readonly noteText = signal('');
 
@@ -255,6 +245,9 @@ export class Roster {
       const id = this.routeId();
       if (!id) return;
       untracked(() => {
+        // From here the phone is in students' hands, so the list closes behind
+        // us — including for the back gesture, which presses no button.
+        this.settings.lock();
         this.store.select(id);
         if (!this.store.courses().length && this.settings.configured()) {
           void this.store.load();
@@ -428,34 +421,14 @@ export class Roster {
   // Leaving the class
   // -------------------------------------------------------------------------
 
+  /**
+   * Asks for nothing: the class list asks for itself.
+   *
+   * This used to hold the code, which guarded only the button — a student can
+   * leave a class by swiping back, pressing nothing. The lock sits on the list
+   * now, so every road to it meets the same four digits.
+   */
   protected askLeave(): void {
-    if (!this.settings.hasPin()) {
-      void this.router.navigate(['/']);
-      return;
-    }
-    this.leavePin.set('');
-    this.leaveError.set(null);
-    this.leaving.set(true);
-  }
-
-  protected cancelLeave(): void {
-    this.leaving.set(false);
-    this.leavePin.set('');
-  }
-
-  protected onLeavePin(event: Event): void {
-    this.leavePin.set((event.target as HTMLInputElement).value);
-    this.leaveError.set(null);
-  }
-
-  protected confirmLeave(event: Event): void {
-    event.preventDefault();
-    if (!this.settings.matches(this.leavePin())) {
-      this.leaveError.set(this.t('gate.wrong'));
-      return;
-    }
-    this.leaving.set(false);
-    this.leavePin.set('');
     void this.router.navigate(['/']);
   }
 

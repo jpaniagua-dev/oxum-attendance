@@ -1,0 +1,35 @@
+/*
+ * Centred on the screen it covers, at the width of a phone's thumb reach. The
+ * mark says which studio is asking, since this is the first thing a teacher
+ * meets when the app is opened cold.
+ */
+.gate {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 22rem;
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding: var(--gutter);
+}
+
+/* See the note on `.mark` in the class list's stylesheet. */
+.mark {
+  align-self: center;
+  width: min(14rem, 66%);
+  height: auto;
+  padding: 0.9rem 1.2rem;
+  border-radius: var(--radius);
+  background: var(--mark-plate);
+}
+
+.gate h1 {
+  font-size: var(--step-2);
+}
+
+.gate .btn {
+  justify-content: center;
+}

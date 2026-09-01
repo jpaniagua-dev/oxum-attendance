@@ -186,40 +186,6 @@
     </div>
   </main>
 
-  @if (leaving()) {
-    <div class="stage" role="alertdialog" aria-labelledby="leave-title">
-      <form class="stage-inner" (submit)="confirmLeave($event)">
-        <h1 id="leave-title">{{ t('leave.title') }}</h1>
-        <p class="note">{{ t('leave.body') }}</p>
-
-        <label class="field">
-          <span>{{ t('gate.code') }}</span>
-          <input
-            type="password"
-            inputmode="numeric"
-            autocomplete="off"
-            maxlength="8"
-            enterkeyhint="done"
-            placeholder="••••"
-            [value]="leavePin()"
-            (input)="onLeavePin($event)"
-          />
-        </label>
-
-        @if (leaveError(); as error) {
-          <p class="field-error">{{ error }}</p>
-        }
-
-        <div class="actions">
-          <button type="button" class="btn btn-ghost" (click)="cancelLeave()">
-            {{ t('common.cancel') }}
-          </button>
-          <button type="submit" class="btn btn-primary">{{ t('leave.confirm') }}</button>
-        </div>
-      </form>
-    </div>
-  }
-
   @if (untick(); as pending) {
     <div class="stage" role="alertdialog" aria-labelledby="untick-title">
       <div class="stage-inner">

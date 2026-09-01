@@ -11,6 +11,7 @@ import { I18nService } from '../../core/i18n';
 import { SessionStore } from '../../core/session.store';
 import { SettingsService } from '../../core/settings.service';
 import { longDate } from '../../core/format';
+import { CodeGate } from '../../ui/code-gate';
 import { LangSwitch } from '../../ui/lang-switch';
 import { Course, Group, Student } from '../../core/models';
 
@@ -34,7 +35,7 @@ let entered = false;
  */
 @Component({
   selector: 'app-courses',
-  imports: [RouterLink, LangSwitch],
+  imports: [RouterLink, CodeGate, LangSwitch],
   templateUrl: './courses.html',
   styleUrl: './courses.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
